@@ -406,7 +406,7 @@ def _anchor_pairs(z, count):
 
 
 def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, top=10,
-                   tol=0.6, max_rel=0.4, keep=40, tile_deg=6.0, verbose=True):
+                   tol=0.6, max_rel=0.4, keep=150, polish=600, tile_deg=6.0, verbose=True):
     """
     Search the sky for the star sets that best trace mol's skeleton.
 
@@ -414,6 +414,8 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
     region:  optional (ra_deg, dec_deg, radius_deg) to restrict where the figure's center may lie
     mirror:  also allow the mirror image of the 2D drawing
     skip:    allow up to this many atoms without a star (drawn as plain line corners)
+    polish:  how many of the best raw candidates to re-fit in their own frame. Raw scores come from
+             tile projections not centered on the figure, so be generous here.
     Returns up to `top` matches sorted by distortion, at least one per number of starless atoms,
     each using mostly different stars from the others with the same number of starless atoms.
     """
@@ -479,7 +481,7 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
     if verbose:
         print()
 
-    best = sorted(found.items(), key=lambda kv: kv[1])[: max(50, 10 * top)]
+    best = sorted(found.items(), key=lambda kv: kv[1])[: max(polish, 10 * top)]
     tmpl = dict(templates)
     polished = {}
     for (mirrored, stars), _ in best:
@@ -509,11 +511,16 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
 # Reporting
 # ---------------------------------------------------------------------------
 
-def format_ra(deg):
+def format_ra(deg, tenths=True):
+    if not tenths:
+        t = int(round(deg / 15.0 * 3600)) % (24 * 3600)
+        h, rem = divmod(t, 3600)
+        m, sec = divmod(rem, 60)
+        return f"{h:02d}h {m:02d}m {sec:02d}s"
     t = int(round(deg / 15.0 * 36000)) % (24 * 36000)  # tenths of a second of time
     h, rem = divmod(t, 36000)
-    m, s = divmod(rem, 600)
-    return f"{h:02d}h {m:02d}m {s / 10:04.1f}s"
+    m, sec = divmod(rem, 600)
+    return f"{h:02d}h {m:02d}m {sec / 10:04.1f}s"
 
 
 def format_dec(deg):
@@ -567,6 +574,7 @@ def describe(mol, cat, m):
         "dec_deg": round(float(dec), 5),
         "ra": format_ra(ra),
         "dec": format_dec(dec),
+        "ra_hms": format_ra(ra, tenths=False),
         "constellation": CONSTELLATIONS.get(main_con.lower(), main_con).replace("_", " "),
         "constellations": [CONSTELLATIONS.get(c.lower(), c).replace("_", " ") for c in con_counts],
         "distortion": round(float(m.score), 4),
@@ -610,6 +618,35 @@ def print_report(info, rank):
 # Chart
 # ---------------------------------------------------------------------------
 
+def _draw_bonds(ax, mol, pos, color, lw, inner_lw, alpha=1.0, zorder=3):
+    """Skeletal-formula bonds between the points `pos` (complex): double bonds in rings get an
+    inner parallel line toward the ring's center, other double/triple bonds parallel lines."""
+    def line(p, q, width):
+        ax.plot([p.real, q.real], [p.imag, q.imag], color=color, lw=width, alpha=alpha,
+                solid_capstyle="round", zorder=zorder)
+
+    for i, j, order in mol.bonds:
+        p, q = pos[i], pos[j]
+        d = q - p
+        normal = 1j * d / abs(d)
+        if order == 1:
+            line(p, q, lw)
+            continue
+        # For a fused bond, draw the inner line inside the ring with the most double bonds
+        # (the aromatic one), then prefer the smaller ring.
+        ring = min((rg for rg in mol.rings if i in rg and j in rg), default=None,
+                   key=lambda rg: (-sum(o == 2 and x in rg and y in rg for x, y, o in mol.bonds), len(rg)))
+        if order == 2 and ring is not None:
+            inward = pos[list(ring)].mean() - (p + q) / 2
+            normal *= np.sign((np.conj(normal) * inward).real) or 1
+            off = 0.2 * abs(d) * normal
+            line(p, q, lw)
+            line(p + 0.17 * d + off, q - 0.17 * d + off, inner_lw)
+        else:
+            for k in ((-0.09, 0.09) if order == 2 else (-0.15, 0.0, 0.15)):
+                line(p + k * abs(d) * normal, q + k * abs(d) * normal, inner_lw)
+
+
 def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names=False):
     import matplotlib
 
@@ -643,32 +680,7 @@ def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names
                 ax.annotate(cat.name[idx], (w.real, w.imag), xytext=(5, -9), textcoords="offset points",
                             color="#8a96a3", fontsize=7, fontfamily="monospace", zorder=2)
 
-    def line(p, q, **kw):
-        ax.plot([p.real, q.real], [p.imag, q.imag], color=line_col, solid_capstyle="round", **kw)
-
-    for i, j, order in mol.bonds:
-        p, q = stars[i], stars[j]
-        d = q - p
-        if order == 1:
-            line(p, q, lw=1.6, alpha=0.9, zorder=3)
-            continue
-        # For a fused bond, draw the inner line inside the ring with the most double bonds
-        # (the aromatic one), then prefer the smaller ring.
-        ring = min((rg for rg in mol.rings if i in rg and j in rg), default=None,
-                   key=lambda rg: (-sum(o == 2 and x in rg and y in rg for x, y, o in mol.bonds), len(rg)))
-        if order == 2 and ring is not None:
-            # Inner parallel line toward the ring's center, like a textbook skeletal formula.
-            inward = stars[list(ring)].mean() - (p + q) / 2
-            normal = 1j * d / abs(d)
-            normal *= np.sign((np.conj(normal) * inward).real) or 1
-            off = 0.2 * abs(d) * normal
-            line(p, q, lw=1.6, alpha=0.9, zorder=3)
-            line(p + 0.17 * d + off, q - 0.17 * d + off, lw=1.2, alpha=0.85, zorder=3)
-        else:
-            normal = 1j * d / abs(d)
-            shifts = (-0.09, 0.09) if order == 2 else (-0.15, 0.0, 0.15)
-            for k in shifts:
-                line(p + k * abs(d) * normal, q + k * abs(d) * normal, lw=1.3, alpha=0.9, zorder=3)
+    _draw_bonds(ax, mol, stars, line_col, lw=1.6, inner_lw=1.2, alpha=0.9)
 
     for i, w in enumerate(stars):
         if not m.used[i]:
@@ -705,6 +717,78 @@ def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names
     plt.close(fig)
 
 
+def _segment_distance(pts, a, b):
+    """Distance from each point in pts to the segment a-b (all complex)."""
+    d = b - a
+    t = np.clip(((pts - a) * np.conj(d)).real / abs(d) ** 2, 0.0, 1.0)
+    return np.abs(pts - (a + t * d))
+
+
+def plot_tattoo(mol, cat, m, info, path_base, north_up=False, n_background=8, text=True):
+    """Stencil-ready line art: black bonds, star dots in four sizes by magnitude, a few of the
+    brightest nearby stars and the coordinates underneath. Writes <path_base>.svg (transparent,
+    text kept as editable text) and <path_base>.png (white, 600 dpi)."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
+
+    ink = "#000000"
+    rot = 1.0 if north_up else np.conj(m.a) / abs(m.a)
+    pos = vertices(mol, cat, m)[0] * rot
+    s = m.bond_deg
+    lo = np.array([pos.real.min(), pos.imag.min()]) - 0.9 * s
+    hi = np.array([pos.real.max(), pos.imag.max()]) + 0.9 * s
+
+    def radius(mag):
+        # Four size classes keep the dots readable on skin; brighter stars get bigger dots.
+        return s * np.select([mag < 4.0, mag < 5.0, mag < 6.0], [0.15, 0.12, 0.095], 0.075)
+
+    # The brightest other stars in the frame, kept clear of the lines and dots so nothing merges.
+    used = m.stars[m.used]
+    near = np.flatnonzero(cat.xyz @ m.center >= np.cos(min(np.abs(hi - lo).max(), 80) * DEG))
+    near = np.setdiff1d(near, used)
+    w = project(cat.xyz[near], m.center) * rot
+    ok = (w.real >= lo[0]) & (w.real <= hi[0]) & (w.imag >= lo[1]) & (w.imag <= hi[1])
+    near, w = near[ok], w[ok]
+    clear = np.full(len(w), np.inf)
+    for i, j, _ in mol.bonds:
+        clear = np.minimum(clear, _segment_distance(w, pos[i], pos[j]))
+    edge = np.minimum.reduce([w.real - lo[0], hi[0] - w.real, w.imag - lo[1], hi[1] - w.imag])
+    keep = (clear > 0.4 * s) & (edge > 0.15 * s)
+    near, w = near[keep], w[keep]
+    pick = np.argsort(cat.mag[near])[:n_background]
+    bg_w, bg_mag = w[pick], cat.mag[near[pick]]
+
+    width = 8.0
+    height = width * (hi[1] - lo[1]) / (hi[0] - lo[0])
+    fig, ax = plt.subplots(figsize=(width, height + (0.6 if text else 0)))
+    fig.patch.set_alpha(0)
+    ax.set_facecolor("none")
+
+    _draw_bonds(ax, mol, pos, ink, lw=1.5, inner_lw=1.2)
+    for i in np.flatnonzero(m.used):
+        ax.add_patch(Circle((pos[i].real, pos[i].imag), radius(cat.mag[m.stars[i]]), color=ink, lw=0, zorder=4))
+    for p, mag in zip(bg_w, bg_mag):
+        # Background stars stay small so the molecule reads first.
+        ax.add_patch(Circle((p.real, p.imag), 0.45 * radius(mag), color=ink, lw=0, zorder=4))
+
+    ax.set_xlim(lo[0], hi[0])
+    ax.set_ylim(lo[1], hi[1])
+    ax.set_aspect("equal")
+    ax.axis("off")
+    if text:
+        dec = info["dec"].replace("-", "−")
+        ax.text(0.5, -0.03, f"{info['ra_hms']}   ·   {dec}", transform=ax.transAxes, color=ink, fontsize=13,
+                ha="center", va="top", fontfamily="DejaVu Sans")
+
+    with plt.rc_context({"svg.fonttype": "none"}):
+        fig.savefig(f"{path_base}.svg", transparent=True, bbox_inches="tight", pad_inches=0.15)
+    fig.savefig(f"{path_base}.png", dpi=600, facecolor="white", bbox_inches="tight", pad_inches=0.15)
+    plt.close(fig)
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -728,6 +812,11 @@ def main(argv=None):
     p.add_argument("--north-up", action="store_true", help="draw charts north-up instead of molecule-upright")
     p.add_argument("--labels", action="store_true", help="label heteroatoms with their element")
     p.add_argument("--star-names", action="store_true", help="label named background stars")
+    p.add_argument("--tattoo", action="store_true",
+                   help="also write stencil-ready line art (SVG + PNG) for every charted candidate")
+    p.add_argument("--tattoo-stars", type=int, default=8, metavar="N",
+                   help="how many of the brightest nearby stars to add to the tattoo art (default 8)")
+    p.add_argument("--no-tattoo-text", action="store_true", help="leave the coordinates off the tattoo art")
     p.add_argument("--catalog", help="path to a local hygdata_v41.csv instead of downloading it")
     args = p.parse_args(argv)
 
@@ -759,6 +848,10 @@ def main(argv=None):
             png = out / f"{slug}_{rank}.png"
             plot_chart(mol, full, m, info, png, args.north_up, args.labels, args.star_names)
             info["chart"] = str(png)
+            if args.tattoo:
+                base = out / f"{slug}_{rank}_tattoo"
+                plot_tattoo(mol, full, m, info, base, args.north_up, args.tattoo_stars, not args.no_tattoo_text)
+                info["tattoo"] = [f"{base}.svg", f"{base}.png"]
     (out / f"{slug}.json").write_text(json.dumps(report, indent=2, ensure_ascii=False))
     print(f"\nCharts and {slug}.json written to {out}/")
 

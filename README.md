@@ -22,7 +22,7 @@ python astrocule.py melatonin                       # anything else is looked up
 Built-in names: estradiol, testosterone, progesterone, spironolactone, serotonin, dopamine, caffeine.
 
 The first run downloads the [HYG database](https://github.com/astronexus/HYG-Database) (about 34 MB)
-to `~/.cache/astrocule`. A whole-sky search takes a few minutes. It prints a table of candidates
+to `~/.cache/astrocule`. A whole-sky search takes 5 to 10 minutes; `--region` is much faster. It prints a table of candidates
 sorted by distortion, then a per-atom star list for the best few. Results go to `./out`: one chart
 per charted candidate plus a JSON file with every candidate and every star (HIP number, RA/Dec,
 magnitude) and how far it sits from its ideal atom position.
@@ -39,6 +39,9 @@ magnitude) and how far it sits from its ideal atom position.
 | `--north-up` | | draw charts north-up instead of turning the molecule upright |
 | `--labels` | | label heteroatoms (O, N, ...) with their element |
 | `--star-names` | | label named background stars |
+| `--tattoo` | | also write stencil-ready line art (SVG + PNG) for every charted candidate |
+| `--tattoo-stars N` | 8 | how many of the brightest nearby stars to add to the tattoo art |
+| `--no-tattoo-text` | | leave the coordinates off the tattoo art |
 
 ## How it works
 
@@ -60,6 +63,19 @@ magnitude) and how far it sits from its ideal atom position.
 
 The score is the RMSD between the stars and the ideal atom positions, in units of the bond length.
 0.1 means stars are off by a tenth of a bond on average.
+
+### Tattoo export
+
+`--tattoo` writes `<name>_<rank>_tattoo.svg` and `.png` next to each chart. The art is black line work
+meant to be handed to a tattoo artist: bonds, one dot per star in four sizes by brightness, a few of
+the brightest nearby stars as small dots (kept clear of the lines and the edges), and the coordinates
+underneath. The SVG has a transparent background and keeps the coordinates as editable text, so the
+artist can swap the font. The PNG is white-backed at 600 dpi.
+
+Fine lines spread a little in skin over the years. The inner lines of double bonds sit closest to
+other lines, so ask your artist how small they'd go before those merge.
+
+![tattoo art](examples/17-estradiol_1_tattoo.png)
 
 ### Starless atoms
 
