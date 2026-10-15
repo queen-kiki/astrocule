@@ -1,5 +1,15 @@
 # astrocule
 
+> [!WARNING]
+> ## ⚠️ AI SLOP WARNING ⚠️
+>
+> This entire project was written by an AI (Claude) in a single chat session, with only light
+> human review. The search is heuristic, the tests are few, and the astronomy, chemistry and
+> coordinates have **not** been independently checked by anyone who knows what they're doing.
+>
+> **If you're putting any of this on your body:** look the stars up yourself (the JSON lists every
+> HIP number) in a proper planetarium tool like Stellarium before anything gets inked.
+
 Find a molecule's skeletal formula hidden among real stars.
 
 Give it any molecule and it lays out the heavy-atom skeleton in 2D, searches the whole sky
