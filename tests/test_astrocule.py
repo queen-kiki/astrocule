@@ -44,32 +44,64 @@ def test_format_coordinates():
     assert A.format_dec(-44.23667) == "-44° 14′ 12″"
 
 
+def _planted_catalog(mol, shape, seed=7, drop=None):
+    """400 random stars within 12 deg of (200, +30) plus a slightly jittered copy of shape.
+    Atom `drop`, if given, gets no star."""
+    rng = np.random.default_rng(seed)
+    center = A.radec_to_xyz(200.0, 30.0)
+    n_bg = 400
+    bg = 12.0 * np.sqrt(rng.uniform(size=n_bg)) * np.exp(1j * rng.uniform(0, 2 * np.pi, n_bg))
+    planted = 1.5 * np.exp(0.6j) * shape + (1 - 2j) + rng.normal(scale=0.05, size=mol.n) * (1 + 1j)
+    if drop is not None:
+        planted = np.delete(planted, drop)
+    ra, dec = A.xyz_to_radec(A.unproject(np.concatenate([bg, planted]), center))
+    n = len(ra)
+    cat = A.Catalog(np.arange(n), ra, dec, np.full(n, 5.0), np.full(n, ""), np.full(n, "Boo"))
+    return cat, np.arange(n_bg, n)
+
+
 @pytest.mark.parametrize("mirrored", [False, True])
 def test_finds_planted_molecule(mirrored):
     """Hide a slightly jittered molecule among random stars and check the search recovers it."""
-    rng = np.random.default_rng(7)
     mol = A.load_molecule("serotonin")
-    center = A.radec_to_xyz(200.0, 30.0)
-
-    # 400 random stars within 12 deg of the center, plus the planted figure.
-    n_bg = 400
-    r = 12.0 * np.sqrt(rng.uniform(size=n_bg))
-    phi = rng.uniform(0, 2 * np.pi, n_bg)
-    bg = r * np.exp(1j * phi)
     shape = np.conj(mol.z) if mirrored else mol.z
-    planted = 1.5 * np.exp(0.6j) * shape + (1 - 2j) + rng.normal(scale=0.05, size=mol.n) * (1 + 1j)
-    v = A.unproject(np.concatenate([bg, planted]), center)
-    ra, dec = A.xyz_to_radec(v)
-    n = len(ra)
-    cat = A.Catalog(np.arange(n), ra, dec, np.full(n, 5.0), np.full(n, ""), np.full(n, "Boo"))
+    cat, planted = _planted_catalog(mol, shape)
 
-    matches = A.find_asterisms(mol, cat, bond=(1.0, 2.0), region=(200.0, 30.0, 8.0), top=1, verbose=False)
-    best = matches[0]
+    best = A.find_asterisms(mol, cat, bond=(1.0, 2.0), region=(200.0, 30.0, 8.0), top=1, verbose=False)[0]
     # A random star can land closer to an ideal atom position than the jittered planted one,
     # so require the search to do at least as well as the planted figure and mostly reuse it.
-    truth = A._polish(shape, mirrored, np.arange(n_bg, n), cat.xyz, 1.0, 2.0)
+    truth = A._polish(shape, mirrored, planted, cat.xyz, 1.0, 2.0, skip=0)[0]
     assert best.mirrored == mirrored
+    assert best.n_skipped == 0
     assert best.score <= truth.score * 1.001
-    assert len(set(best.stars) & set(range(n_bg, n))) >= mol.n - 2
+    assert len(set(best.stars) & set(planted)) >= mol.n - 2
     assert best.score < 0.1
     assert best.bond_deg == pytest.approx(1.5, rel=0.05)
+
+
+@pytest.mark.parametrize("drop", [0, 6])
+def test_skip_leaves_missing_atom_starless(drop):
+    """With one planted star missing, skip=1 should find the rest and leave that atom starless."""
+    mol = A.load_molecule("serotonin")
+    cat, planted = _planted_catalog(mol, mol.z, drop=drop)
+
+    matches = A.find_asterisms(mol, cat, bond=(1.0, 2.0), region=(200.0, 30.0, 8.0), mirror=False,
+                               skip=1, top=3, verbose=False)
+    assert [m.score for m in matches] == sorted(m.score for m in matches)
+    assert {m.n_skipped for m in matches} == {0, 1}
+    best = min((m for m in matches if m.n_skipped == 1), key=lambda m: m.score)
+    assert best.score < 0.1
+    assert np.flatnonzero(~best.used).tolist() == [drop]
+    assert len(set(best.stars[best.used]) & set(planted)) >= mol.n - 3
+    assert best.score < min(m.score for m in matches if m.n_skipped == 0)
+
+
+def test_refine_forced_skip():
+    rng = np.random.default_rng(1)
+    T = rng.normal(size=8) + 1j * rng.normal(size=8)
+    P = np.concatenate([2 * T + 1, rng.normal(size=30) * 6 + 1j * rng.normal(size=30) * 6])
+    from scipy.spatial import cKDTree
+    stars, a, b, score = A.refine(T, P, cKDTree(A._xy(P)), 2.0, 1.0, 0.5, 4.0, forced=(3,))
+    assert stars[3] == -1
+    assert all(stars[i] == i for i in range(8) if i != 3)
+    assert score == pytest.approx(0.0, abs=1e-9)

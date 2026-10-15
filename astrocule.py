@@ -259,34 +259,58 @@ def fit_similarity(src, dst, smin=0.0, smax=np.inf):
     return a, dc - a * sc
 
 
-def refine(T, P, tree, a, b, smin, smax, iters=10, k=6):
-    """Alternate one-to-one star assignment (Hungarian) and similarity refit until stable."""
-    assign = None
+def refine(T, P, tree, a, b, smin, smax, skip=0, forced=(), iters=12, k=6):
+    """Alternate one-to-one star assignment (Hungarian) and similarity refit until stable.
+
+    The atoms in `forced`, plus the `skip` worst-fitting others, go without a star: they are left
+    out of the assignment and the fit and just become line corners on the chart (trimmed ICP).
+    Returns (stars, a, b, score) with stars[i] = -1 for starless atoms."""
+    n = len(T)
+    forced = list(forced)
+    n_drop = len(forced) + skip
     k = min(k, len(P))
+    state = None
     for _ in range(iters):
         pred = a * T + b
         _, nn = tree.query(_xy(pred), k=k)
         cand = np.unique(nn)
-        if len(cand) < len(T):
+        if len(cand) < n:
             return None
-        rows, cols = linear_sum_assignment(np.abs(pred[:, None] - P[cand][None, :]) ** 2)
-        new = cand[cols[np.argsort(rows)]]
-        if assign is not None and np.array_equal(new, assign):
+        cost = np.abs(pred[:, None] - P[cand][None, :]) ** 2
+        use = np.ones(n, dtype=bool)
+        if n_drop:
+            _, cols = linear_sum_assignment(cost)
+            resid = cost[np.arange(n), cols]
+            resid[forced] = np.inf
+            use[np.argsort(-resid)[:n_drop]] = False
+        _, cols = linear_sum_assignment(cost[use])
+        stars = np.full(n, -1)
+        stars[use] = cand[cols]
+        if state is not None and np.array_equal(stars, state):
             break
-        assign = new
-        a, b = fit_similarity(T, P[assign], smin, smax)
-    rel_rmsd = np.sqrt(np.mean(np.abs(a * T + b - P[assign]) ** 2)) / abs(a)
-    return assign, a, b, rel_rmsd
+        state = stars
+        a, b = fit_similarity(T[use], P[stars[use]], smin, smax)
+    use = stars >= 0
+    score = np.sqrt(np.mean(np.abs(a * T[use] + b - P[stars[use]]) ** 2)) / abs(a)
+    return stars, a, b, score
 
 
 @dataclass
 class Match:
-    stars: np.ndarray   # catalog index for each atom
+    stars: np.ndarray   # catalog index for each atom, -1 where the atom has no star
     mirrored: bool
     center: np.ndarray  # projection center (unit vector)
     a: complex          # template -> chart plane: w = a*z + b, in degrees
     b: complex
-    score: float        # RMSD in units of bond length (shape distortion)
+    score: float        # RMSD of the starred atoms, in units of bond length (shape distortion)
+
+    @property
+    def used(self):
+        return self.stars >= 0
+
+    @property
+    def n_skipped(self):
+        return int(np.sum(~self.used))
 
     @property
     def bond_deg(self):
@@ -297,9 +321,10 @@ class Match:
         return self.score * self.bond_deg * 60.0
 
 
-def _hypotheses(T, anchors, order, P, tree, cand_i, in_cell, smin, smax, tol, max_rel, keep):
+def _hypotheses(T, anchors, order, P, tree, cand_i, in_cell, smin, smax, tol, max_rel, keep, skip):
     """Every star pair (i, j) that could host the anchor atoms defines one similarity
-    transform. Score all of them atom by atom against the nearest stars, pruning early."""
+    transform. Score all of them atom by atom against the nearest stars, pruning early.
+    Up to `skip` atoms may miss (no star within tol) without killing the hypothesis."""
     ia, ib = anchors
     D = abs(T[ib] - T[ia])
     nbrs = tree.query_ball_point(_xy(P[cand_i]), r=smax * D)
@@ -318,39 +343,69 @@ def _hypotheses(T, anchors, order, P, tree, cand_i, in_cell, smin, smax, tol, ma
     if len(a) == 0:
         return []
 
-    n = len(T)
+    n = len(T) - skip
     sse = np.zeros(len(a))
+    misses = np.zeros(len(a), dtype=int)
     alive = np.arange(len(a))
     for k in order:
         d, _ = tree.query(_xy(a[alive] * T[k] + b[alive]), workers=-1)
         rel2 = (d / np.abs(a[alive])) ** 2
-        sse[alive] += rel2
-        alive = alive[(rel2 <= tol ** 2) & (sse[alive] <= n * max_rel ** 2)]
+        miss = rel2 > tol ** 2
+        misses[alive] += miss
+        sse[alive] += np.where(miss, 0.0, rel2)
+        alive = alive[(misses[alive] <= skip) & (sse[alive] <= n * max_rel ** 2)]
         if len(alive) == 0:
             return []
     best = alive[np.argsort(sse[alive])[:keep]]
     return list(zip(a[best], b[best]))
 
 
-def _polish(T, mirrored, stars, cat_xyz, smin, smax):
+def _polish(T, mirrored, stars, cat_xyz, smin, smax, skip):
     """Re-project around the matched figure itself and refine there, so the final fit and
-    the chart share one nearly distortion-free frame."""
-    center = cat_xyz[stars].mean(axis=0)
+    the chart share one nearly distortion-free frame. Returns the best variant with exactly
+    k starless atoms for every k up to `skip`; for k >= 1 every atom is tried as the first
+    one to drop, the rest are picked greedily."""
+    used = stars[stars >= 0]
+    center = cat_xyz[used].mean(axis=0)
     center /= np.linalg.norm(center)
-    r = np.arccos(np.clip(cat_xyz[stars] @ center, -1, 1)).max() + 2 * smax * DEG
+    r = np.arccos(np.clip(cat_xyz[used] @ center, -1, 1)).max() + 2 * smax * DEG
     field = np.flatnonzero(cat_xyz @ center >= np.cos(min(r, 80 * DEG)))
     P = project(cat_xyz[field], center)
     tree = cKDTree(_xy(P))
-    local = np.searchsorted(field, stars)
-    a, b = fit_similarity(T, P[local], smin, smax)
-    res = refine(T, P, tree, a, b, smin, smax)
-    if res is None:
-        return None
-    assign, a, b, score = res
-    return Match(field[assign], mirrored, center, a, b, score)
+    keep = stars >= 0
+    a, b = fit_similarity(T[keep], P[np.searchsorted(field, stars[keep])], smin, smax)
+
+    out = []
+    for k in range(skip + 1):
+        tries = [((), 0)] if k == 0 else [((i,), k - 1) for i in range(len(T))]
+        best = None
+        for forced, extra in tries:
+            res = refine(T, P, tree, a, b, smin, smax, skip=extra, forced=forced)
+            if res is not None and (best is None or res[3] < best[3]):
+                best = res
+        if best is not None:
+            s, a2, b2, score = best
+            out.append(Match(np.where(s >= 0, field[np.maximum(s, 0)], -1), mirrored, center, a2, b2, score))
+    return out
 
 
-def find_asterisms(mol, cat, bond=(1.0, 4.0), region=None, mirror=True, top=5,
+def _anchor_pairs(z, count):
+    """`count` disjoint atom pairs, each the farthest-apart pair among the atoms left, so that
+    any `count - 1` starless atoms leave at least one pair fully starred."""
+    left = list(range(len(z)))
+    pairs = []
+    for _ in range(count):
+        if len(left) < 2:
+            break
+        sub = z[left]
+        d = np.abs(sub[:, None] - sub[None, :])
+        i, j = np.unravel_index(np.argmax(d), d.shape)
+        pairs.append((left[i], left[j]))
+        left = [x for x in left if x not in (left[i], left[j])]
+    return pairs
+
+
+def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, top=10,
                    tol=0.6, max_rel=0.4, keep=40, tile_deg=6.0, verbose=True):
     """
     Search the sky for the star sets that best trace mol's skeleton.
@@ -358,18 +413,21 @@ def find_asterisms(mol, cat, bond=(1.0, 4.0), region=None, mirror=True, top=5,
     bond:    allowed bond length on the sky in degrees (min, max)
     region:  optional (ra_deg, dec_deg, radius_deg) to restrict where the figure's center may lie
     mirror:  also allow the mirror image of the 2D drawing
-    Returns up to `top` matches with mostly different stars, best first.
+    skip:    allow up to this many atoms without a star (drawn as plain line corners)
+    Returns up to `top` matches sorted by distortion, at least one per number of starless atoms,
+    each using mostly different stars from the others with the same number of starless atoms.
     """
     smin, smax = bond
     if len(cat.hip) < mol.n:
         raise SystemExit(f"Only {len(cat.hip)} stars available, need at least {mol.n}.")
+    if not 0 <= skip <= mol.n - 3:
+        raise SystemExit(f"--skip must be between 0 and {mol.n - 3} for this molecule.")
     templates = [(False, mol.z)] + ([(True, np.conj(mol.z))] if mirror else [])
 
-    # Anchors: the farthest-apart atom pair gives the most stable scale/rotation estimate.
-    dist = np.abs(mol.z[:, None] - mol.z[None, :])
-    anchors = np.unravel_index(np.argmax(dist), dist.shape)
-    order = [k for k in np.argsort(-np.abs(mol.z)) if k not in anchors]
-    r_anchor = np.abs(mol.z[list(anchors)]).max()
+    anchor_sets = []
+    for anchors in _anchor_pairs(mol.z, skip + 1):
+        order = [k for k in np.argsort(-np.abs(mol.z)) if k not in anchors]
+        anchor_sets.append((anchors, order, np.abs(mol.z[list(anchors)]).max()))
     r_fig = np.abs(mol.z).max()
 
     xyz = cat.xyz
@@ -401,40 +459,50 @@ def find_asterisms(mol, cat, bond=(1.0, 4.0), region=None, mirror=True, top=5,
             continue
         P = project(xyz[field], c)
         tree = cKDTree(_xy(P))
-        cand_i = np.flatnonzero(np.abs(P) <= cell_r + smax * r_anchor)
 
-        for mirrored, T in templates:
-            for a, b in _hypotheses(T, anchors, order, P, tree, cand_i, in_cell, smin, smax, tol, max_rel, keep):
-                res = refine(T, P, tree, a, b, smin, smax)
-                if res is None:
-                    continue
-                assign, _, _, score = res
-                key = (mirrored, tuple(field[assign]))
-                if score < found.get(key, np.inf):
-                    found[key] = score
+        for anchors, order, r_anchor in anchor_sets:
+            cand_i = np.flatnonzero(np.abs(P) <= cell_r + smax * r_anchor)
+            for mirrored, T in templates:
+                hyps = _hypotheses(T, anchors, order, P, tree, cand_i, in_cell,
+                                   smin, smax, tol, max_rel, keep, skip)
+                for a, b in hyps:
+                    res = refine(T, P, tree, a, b, smin, smax, skip=skip)
+                    if res is None:
+                        continue
+                    stars, _, _, score = res
+                    key = (mirrored, tuple(np.where(stars >= 0, field[np.maximum(stars, 0)], -1)))
+                    if score < found.get(key, np.inf):
+                        found[key] = score
         if verbose and (t % 25 == 0 or t == len(centers) - 1):
             print(f"\r  searched {t + 1}/{len(centers)} sky tiles, {len(found)} candidate figures "
                   f"({time.time() - t0:.0f}s)", end="", flush=True)
     if verbose:
         print()
 
-    best = sorted(found.items(), key=lambda kv: kv[1])[: max(50, 20 * top)]
+    best = sorted(found.items(), key=lambda kv: kv[1])[: max(50, 10 * top)]
     tmpl = dict(templates)
     polished = {}
     for (mirrored, stars), _ in best:
-        m = _polish(tmpl[mirrored], mirrored, np.array(stars), xyz, smin, smax)
-        if m is not None:
+        for m in _polish(tmpl[mirrored], mirrored, np.array(stars), xyz, smin, smax, skip):
             key = (mirrored, tuple(m.stars))
             if key not in polished or m.score < polished[key].score:
                 polished[key] = m
 
+    ranked = sorted(polished.values(), key=lambda m: m.score)
     results = []
-    for m in sorted(polished.values(), key=lambda m: m.score):
-        if all(len(set(m.stars) & set(r.stars)) <= 0.3 * mol.n for r in results):
+
+    def distinct(m):
+        return all(len(set(m.stars[m.used]) & set(r.stars[r.used])) <= 0.3 * mol.n
+                   for r in results if r.n_skipped == m.n_skipped)
+
+    for m in ranked:
+        if len(results) < top and distinct(m):
             results.append(m)
-        if len(results) == top:
-            break
-    return results
+    # Always show the best figure for every number of starless atoms, so they can be compared.
+    for k in range(skip + 1):
+        if not any(r.n_skipped == k for r in results):
+            results += [m for m in ranked if m.n_skipped == k][:1]
+    return sorted(results, key=lambda m: m.score)
 
 
 # ---------------------------------------------------------------------------
@@ -456,20 +524,41 @@ def format_dec(deg):
     return f"{sign}{d:02d}° {m:02d}′ {s:02d}″"
 
 
+def vertices(mol, cat, m):
+    """Chart-plane position of every atom: its star, or the ideal spot for starless atoms."""
+    ideal = m.a * (np.conj(mol.z) if m.mirrored else mol.z) + m.b
+    pos = ideal.copy()
+    pos[m.used] = project(cat.xyz[m.stars[m.used]], m.center)
+    return pos, ideal
+
+
 def describe(mol, cat, m):
     ra, dec = xyz_to_radec(m.center)
-    cons = [c for c in cat.con[m.stars] if c]
+    used = m.stars[m.used]
+    cons = [c for c in cat.con[used] if c]
     con_counts = {c: cons.count(c) for c in dict.fromkeys(cons)}
     main_con = max(con_counts, key=con_counts.get) if con_counts else ""
-    fitted = m.a * (np.conj(mol.z) if m.mirrored else mol.z) + m.b
-    actual = project(cat.xyz[m.stars], m.center)
-    offsets = np.abs(fitted - actual) * 60.0
+    pos, ideal = vertices(mol, cat, m)
+    offsets = np.abs(pos - ideal) * 60.0
 
-    hull_pts = _xy(actual)
     near = np.flatnonzero(cat.xyz @ m.center >= np.cos(30 * DEG))
-    others = np.setdiff1d(near, m.stars)
-    inside = Delaunay(hull_pts).find_simplex(_xy(project(cat.xyz[others], m.center))) >= 0
-    intruders = int(np.sum(inside & (cat.mag[others] < np.median(cat.mag[m.stars]))))
+    others = np.setdiff1d(near, used)
+    inside = Delaunay(_xy(pos)).find_simplex(_xy(project(cat.xyz[others], m.center))) >= 0
+    intruders = int(np.sum(inside & (cat.mag[others] < np.median(cat.mag[used]))))
+
+    stars = []
+    for i, s in enumerate(m.stars):
+        entry = {"atom": f"{mol.symbols[i]}{i + 1}", "starless": bool(s < 0)}
+        if s >= 0:
+            entry.update(
+                hip=int(cat.hip[s]),
+                name=str(cat.name[s]),
+                ra_deg=round(float(cat.ra[s]), 5),
+                dec_deg=round(float(cat.dec[s]), 5),
+                mag=round(float(cat.mag[s]), 2),
+                offset_arcmin=round(float(offsets[i]), 2),
+            )
+        stars.append(entry)
 
     return {
         "molecule": mol.name,
@@ -484,22 +573,22 @@ def describe(mol, cat, m):
         "rmsd_arcmin": round(float(m.rmsd_arcmin), 2),
         "bond_deg": round(float(m.bond_deg), 3),
         "mirrored": bool(m.mirrored),
-        "brightest_mag": round(float(cat.mag[m.stars].min()), 2),
-        "faintest_mag": round(float(cat.mag[m.stars].max()), 2),
+        "starless_atoms": [s["atom"] for s in stars if s["starless"]],
+        "brightest_mag": round(float(cat.mag[used].min()), 2),
+        "faintest_mag": round(float(cat.mag[used].max()), 2),
         "brighter_intruders": intruders,
-        "stars": [
-            {
-                "atom": f"{mol.symbols[i]}{i + 1}",
-                "hip": int(cat.hip[s]),
-                "name": str(cat.name[s]),
-                "ra_deg": round(float(cat.ra[s]), 5),
-                "dec_deg": round(float(cat.dec[s]), 5),
-                "mag": round(float(cat.mag[s]), 2),
-                "offset_arcmin": round(float(offsets[i]), 2),
-            }
-            for i, s in enumerate(m.stars)
-        ],
+        "stars": stars,
     }
+
+
+def print_summary(infos):
+    print(f"\n{'#':>3}  {'distortion':>10}  {'RMSD':>6}  {'bond':>5}  {'starless':<10} {'RA':<14} {'Dec':<13} "
+          f"{'mags':<9} {'mir':<3}  constellation")
+    for rank, info in enumerate(infos, 1):
+        print(f"{rank:>3}  {info['distortion']:>10.3f}  {info['rmsd_arcmin']:>5.1f}′  {info['bond_deg']:>4.2f}°  "
+              f"{','.join(info['starless_atoms']) or '-':<10} {info['ra']:<14} {info['dec']:<13} "
+              f"{info['brightest_mag']:.1f}–{info['faintest_mag']:.1f}  {'yes' if info['mirrored'] else '':<3}  "
+              f"{info['constellation']}")
 
 
 def print_report(info, rank):
@@ -510,6 +599,9 @@ def print_report(info, rank):
           + (", mirrored drawing" if info["mirrored"] else ""))
     print(f"    {'atom':<6}{'HIP':>8}  {'RA':>10} {'Dec':>10} {'mag':>5}  {'off':>6}  name")
     for s in info["stars"]:
+        if s["starless"]:
+            print(f"    {s['atom']:<6}{'-':>8}  (no star, drawn as a plain line corner)")
+            continue
         print(f"    {s['atom']:<6}{s['hip']:>8}  {s['ra_deg']:>10.4f} {s['dec_deg']:>+10.4f} {s['mag']:>5.2f}"
               f"  {s['offset_arcmin']:>5.1f}′  {s['name']}")
 
@@ -527,7 +619,7 @@ def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names
     bg_col, line_col, glow_col = "#0b0e14", "#e2f1ff", "#80d8ff"
     rot = 1.0 if north_up else np.conj(m.a) / abs(m.a)  # turn the molecule upright on the page
 
-    stars = project(cat.xyz[m.stars], m.center) * rot
+    stars = vertices(mol, cat, m)[0] * rot
     s = m.bond_deg
     lo = np.array([stars.real.min(), stars.imag.min()]) - 1.6 * s
     hi = np.array([stars.real.max(), stars.imag.max()]) + 1.6 * s
@@ -547,7 +639,7 @@ def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names
 
     if star_names:
         for idx, w in zip(near, bg):
-            if cat.name[idx] and idx not in m.stars:
+            if cat.name[idx] and idx not in m.stars[m.used]:
                 ax.annotate(cat.name[idx], (w.real, w.imag), xytext=(5, -9), textcoords="offset points",
                             color="#8a96a3", fontsize=7, fontfamily="monospace", zorder=2)
 
@@ -578,10 +670,11 @@ def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names
             for k in shifts:
                 line(p + k * abs(d) * normal, q + k * abs(d) * normal, lw=1.3, alpha=0.9, zorder=3)
 
-    mags = cat.mag[m.stars]
     for i, w in enumerate(stars):
+        if not m.used[i]:
+            continue  # starless atom: the bonds just meet in a plain corner
         special = mol.symbols[i] != "C" or mol.degree(i) == 1
-        core = max(size(mags[i]) * 1.4, 30.0)
+        core = max(size(cat.mag[m.stars[i]]) * 1.4, 30.0)
         ax.scatter([w.real], [w.imag], s=core * 2.8, c=glow_col, alpha=0.22, edgecolors="none", zorder=4)
         if special:
             ax.scatter([w.real], [w.imag], s=core * 2.6, marker="*", c="#ffffff", edgecolors="none", zorder=5)
@@ -627,7 +720,10 @@ def main(argv=None):
     p.add_argument("--region", type=float, nargs=3, metavar=("RA", "DEC", "RADIUS"),
                    help="only search for figures centered within RADIUS degrees of RA/DEC (default: whole sky)")
     p.add_argument("--no-mirror", action="store_true", help="don't allow the mirror image of the drawing")
-    p.add_argument("--top", type=int, default=5, help="how many distinct matches to report and chart")
+    p.add_argument("--skip", type=int, default=1,
+                   help="let up to this many atoms go without a star; they become plain line corners (default 1)")
+    p.add_argument("--top", type=int, default=10, help="how many candidates to list, sorted by distortion")
+    p.add_argument("--charts", type=int, default=5, help="how many of the best candidates to chart in detail")
     p.add_argument("--out", default="out", help="output directory (default ./out)")
     p.add_argument("--north-up", action="store_true", help="draw charts north-up instead of molecule-upright")
     p.add_argument("--labels", action="store_true", help="label heteroatoms with their element")
@@ -643,7 +739,7 @@ def main(argv=None):
     print(f"{len(cat.hip)} stars brighter than mag {args.mag}")
 
     matches = find_asterisms(mol, cat, bond=tuple(args.bond), region=args.region,
-                             mirror=not args.no_mirror, top=args.top)
+                             mirror=not args.no_mirror, skip=args.skip, top=args.top)
     if not matches:
         raise SystemExit("No match found. Try a fainter --mag, a wider --bond range or a bigger --region.")
 
@@ -651,14 +747,18 @@ def main(argv=None):
     out.mkdir(parents=True, exist_ok=True)
     slug = re.sub(r"[^a-z0-9]+", "-", mol.name.lower()).strip("-")[:40] or "molecule"
     report = []
-    for rank, m in enumerate(matches, 1):
-        m.stars = sel[m.stars]  # index into the full catalog, which also holds the background stars
-        info = describe(mol, full, m)
-        print_report(info, rank)
-        png = out / f"{slug}_{rank}.png"
-        plot_chart(mol, full, m, info, png, args.north_up, args.labels, args.star_names)
-        info["chart"] = str(png)
-        report.append(info)
+    for m in matches:
+        # Index into the full catalog, which also holds the fainter background stars.
+        m.stars = np.where(m.used, sel[np.maximum(m.stars, 0)], -1)
+        report.append(describe(mol, full, m))
+    print_summary(report)
+    for rank, (m, info) in enumerate(zip(matches, report), 1):
+        info["rank"] = rank
+        if rank <= args.charts:
+            print_report(info, rank)
+            png = out / f"{slug}_{rank}.png"
+            plot_chart(mol, full, m, info, png, args.north_up, args.labels, args.star_names)
+            info["chart"] = str(png)
     (out / f"{slug}.json").write_text(json.dumps(report, indent=2, ensure_ascii=False))
     print(f"\nCharts and {slug}.json written to {out}/")
 
