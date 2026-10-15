@@ -25,8 +25,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from scipy.optimize import linear_sum_assignment
-from scipy.spatial import Delaunay, cKDTree
+from numba import njit, prange
+from scipy.spatial import ConvexHull, Delaunay
 
 DEG = np.pi / 180.0
 
@@ -241,8 +241,382 @@ def fibonacci_sphere(n):
     return np.column_stack([r * np.cos(phi), r * np.sin(phi), zc])
 
 
+def tile_cells(centers):
+    """Exact Voronoi cell radius (degrees) and Voronoi neighbors of every tile center. On a sphere
+    the Delaunay triangulation is the convex hull, and each cell's farthest points are the
+    circumcenters of its triangles, i.e. the outward facet normals."""
+    hull = ConvexHull(centers)
+    radius = np.zeros(len(centers))
+    neighbors = [set() for _ in centers]
+    for tri, eq in zip(hull.simplices, hull.equations):
+        ang = np.arccos(np.clip(centers[tri] @ eq[:3], -1, 1)) / DEG
+        np.maximum.at(radius, tri, ang)
+        for v in tri:
+            neighbors[v].update(int(u) for u in tri if u != v)
+    return radius, [np.array(sorted(nb)) for nb in neighbors]
+
+
 def _xy(w):
     return np.column_stack([w.real, w.imag])
+
+
+# ---------------------------------------------------------------------------
+# Numba kernels (the hot loops of the search)
+# ---------------------------------------------------------------------------
+
+@njit(cache=True)
+def _lsap(cost):
+    """Minimum-cost assignment of every row to a distinct column (rows <= cols).
+    Shortest augmenting path Hungarian algorithm, O(rows^2 * cols)."""
+    n, m = cost.shape
+    inf = np.inf
+    u = np.zeros(n + 1)
+    v = np.zeros(m + 1)
+    p = np.zeros(m + 1, np.int64)    # p[j]: row (1-based) assigned to column j, 0 = free
+    way = np.zeros(m + 1, np.int64)
+    minv = np.empty(m + 1)
+    used = np.empty(m + 1, np.bool_)
+    for i in range(1, n + 1):
+        p[0] = i
+        j0 = 0
+        minv[:] = inf
+        used[:] = False
+        while True:
+            used[j0] = True
+            i0 = p[j0]
+            delta = inf
+            j1 = 0
+            for j in range(1, m + 1):
+                if not used[j]:
+                    cur = cost[i0 - 1, j - 1] - u[i0] - v[j]
+                    if cur < minv[j]:
+                        minv[j] = cur
+                        way[j] = j0
+                    if minv[j] < delta:
+                        delta = minv[j]
+                        j1 = j
+            for j in range(m + 1):
+                if used[j]:
+                    u[p[j]] += delta
+                    v[j] -= delta
+                else:
+                    minv[j] -= delta
+            j0 = j1
+            if p[j0] == 0:
+                break
+        while True:
+            j1 = way[j0]
+            p[j0] = p[j1]
+            j0 = j1
+            if j0 == 0:
+                break
+    out = np.empty(n, np.int64)
+    for j in range(1, m + 1):
+        if p[j] != 0:
+            out[p[j] - 1] = j - 1
+    return out
+
+
+@njit(cache=True)
+def _fit_nb(src, dst, smin, smax):
+    sc = src.mean()
+    dc = dst.mean()
+    num = 0j
+    den = 0.0
+    for i in range(len(src)):
+        zs = src[i] - sc
+        num += np.conj(zs) * (dst[i] - dc)
+        den += zs.real * zs.real + zs.imag * zs.imag
+    a = num / den
+    s = abs(a)
+    a = a * (min(max(s, smin), smax) / s)
+    return a, dc - a * sc
+
+
+@njit(cache=True)
+def _refine_nb(T, P_all, a, b, smin, smax, skip, forced, iters, k):
+    # Only stars that can plausibly be among an atom's k nearest: within the figure's radius plus
+    # 1.5 bond lengths of where it starts. Brute force over those beats a k-d tree here.
+    reach = abs(a) * (np.abs(T).max() + 1.5)
+    reach2 = reach * reach
+    n_loc = 0
+    local = np.empty(len(P_all), np.int64)
+    for j in range(len(P_all)):
+        d = P_all[j] - b
+        if d.real * d.real + d.imag * d.imag <= reach2:
+            local[n_loc] = j
+            n_loc += 1
+    n = len(T)
+    if n_loc < n:
+        return np.full(n, -1, np.int64), a, b, np.inf
+    Px = np.empty(n_loc)
+    Py = np.empty(n_loc)
+    for j in range(n_loc):
+        Px[j] = P_all[local[j]].real
+        Py[j] = P_all[local[j]].imag
+    k = min(k, n_loc)
+    n_drop = skip
+    for i in range(n):
+        if forced[i]:
+            n_drop += 1
+    stars = np.full(n, -1, np.int64)
+    state = np.full(n, -2, np.int64)
+    mark = np.zeros(n_loc, np.bool_)
+    cand = np.empty(n_loc, np.int64)
+    best_d = np.empty(k)
+    best_j = np.empty(k, np.int64)
+    use = np.ones(n, np.bool_)
+    rows = np.empty(n, np.int64)
+    resid = np.empty(n)
+    predx = np.empty(n)
+    predy = np.empty(n)
+    cost = np.empty((n, min(n * k, n_loc)))
+    for _ in range(iters):
+        for i in range(n):
+            w = a * T[i] + b
+            predx[i] = w.real
+            predy[i] = w.imag
+        # k nearest stars of every predicted atom position; their union are the candidates
+        mark[:] = False
+        for i in range(n):
+            best_d[:] = np.inf
+            for j in range(n_loc):
+                dx = Px[j] - predx[i]
+                dy = Py[j] - predy[i]
+                d = dx * dx + dy * dy
+                if d < best_d[k - 1]:
+                    q = k - 1
+                    while q > 0 and best_d[q - 1] > d:
+                        best_d[q] = best_d[q - 1]
+                        best_j[q] = best_j[q - 1]
+                        q -= 1
+                    best_d[q] = d
+                    best_j[q] = j
+            for q in range(k):
+                mark[best_j[q]] = True
+        n_cand = 0
+        for j in range(n_loc):
+            if mark[j]:
+                cand[n_cand] = j
+                n_cand += 1
+        if n_cand < n:
+            return stars, a, b, np.inf
+        C = cost[:, :n_cand]
+        for i in range(n):
+            for c in range(n_cand):
+                dx = predx[i] - Px[cand[c]]
+                dy = predy[i] - Py[cand[c]]
+                C[i, c] = dx * dx + dy * dy
+        use[:] = True
+        if n_drop > 0:
+            cols = _lsap(C)
+            for i in range(n):
+                resid[i] = np.inf if forced[i] else C[i, cols[i]]
+            order = np.argsort(-resid)
+            for q in range(n_drop):
+                use[order[q]] = False
+        n_rows = 0
+        for i in range(n):
+            if use[i]:
+                rows[n_rows] = i
+                n_rows += 1
+        cols = _lsap(C[rows[:n_rows]])
+        stars[:] = -1
+        for r in range(n_rows):
+            stars[rows[r]] = cand[cols[r]]
+        same = True
+        for i in range(n):
+            if stars[i] != state[i]:
+                same = False
+                break
+        if same:
+            break
+        state[:] = stars
+        a, b = _fit_nb(T[rows[:n_rows]], Px[stars[rows[:n_rows]]] + 1j * Py[stars[rows[:n_rows]]], smin, smax)
+    sq = 0.0
+    cnt = 0
+    for i in range(n):
+        if stars[i] >= 0:
+            w = a * T[i] + b
+            dx = w.real - Px[stars[i]]
+            dy = w.imag - Py[stars[i]]
+            sq += dx * dx + dy * dy
+            cnt += 1
+            stars[i] = local[stars[i]]
+    return stars, a, b, np.sqrt(sq / cnt) / abs(a)
+
+
+@njit(cache=True)
+def _grid_build(P, g):
+    """Bucket points into square cells of size g (CSR layout) for radius queries."""
+    x0 = P.real.min() - g
+    y0 = P.imag.min() - g
+    nx = int((P.real.max() - x0) / g) + 2
+    ny = int((P.imag.max() - y0) / g) + 2
+    cell = np.empty(len(P), np.int64)
+    for i in range(len(P)):
+        cell[i] = int((P[i].imag - y0) / g) * nx + int((P[i].real - x0) / g)
+    order = np.argsort(cell, kind="mergesort")
+    start = np.zeros(nx * ny + 1, np.int64)
+    for i in range(len(P)):
+        start[cell[i] + 1] += 1
+    for c in range(nx * ny):
+        start[c + 1] += start[c]
+    return order, start, x0, y0, nx, ny
+
+
+@njit(cache=True)
+def _grid_nearest(P, grid, g, w, R):
+    """Distance from w to the nearest point of P within R, or inf if there is none."""
+    order, start, x0, y0, nx, ny = grid
+    ix0 = max(int((w.real - R - x0) / g), 0)
+    ix1 = min(int((w.real + R - x0) / g), nx - 1)
+    iy0 = max(int((w.imag - R - y0) / g), 0)
+    iy1 = min(int((w.imag + R - y0) / g), ny - 1)
+    best = R * R
+    found = False
+    for iy in range(iy0, iy1 + 1):
+        for ix in range(ix0, ix1 + 1):
+            c = iy * nx + ix
+            for q in range(start[c], start[c + 1]):
+                d = P[order[q]] - w
+                d2 = d.real * d.real + d.imag * d.imag
+                if d2 <= best:
+                    best = d2
+                    found = True
+    return np.sqrt(best) if found else np.inf
+
+
+@njit(parallel=True, cache=True)
+def _hypotheses_nb(Ts, ia, ib, order, P, grid, g, cand_i, smin, smax, tol, max_rel, skip,
+                   frame, near_centers, region_c, region_cos):
+    """Score every anchor-pair hypothesis of one tile, for each template in Ts (the drawing and
+    its mirror image share the star pairs). Returns (a, b, sse), each (len(Ts), H), with
+    sse = inf for hypotheses not owned by this tile or pruned."""
+    D = abs(Ts[0, ib] - Ts[0, ia])
+    r0 = (smin * D) ** 2
+    r1 = (smax * D) ** 2
+    M = len(P)
+
+    # Star pairs (i, j) whose separation fits the anchor atoms' distance at an allowed scale.
+    counts = np.zeros(len(cand_i), np.int64)
+    for q in prange(len(cand_i)):
+        pi = P[cand_i[q]]
+        cnt = 0
+        for j in range(M):
+            d = P[j] - pi
+            d2 = d.real * d.real + d.imag * d.imag
+            if r0 <= d2 <= r1:
+                cnt += 1
+        counts[q] = cnt
+    offs = np.zeros(len(cand_i) + 1, np.int64)
+    for q in range(len(cand_i)):
+        offs[q + 1] = offs[q] + counts[q]
+    H = offs[-1]
+    ii = np.empty(H, np.int64)
+    jj = np.empty(H, np.int64)
+    for q in prange(len(cand_i)):
+        pi = P[cand_i[q]]
+        pos = offs[q]
+        for j in range(M):
+            d = P[j] - pi
+            d2 = d.real * d.real + d.imag * d.imag
+            if r0 <= d2 <= r1:
+                ii[pos] = cand_i[q]
+                jj[pos] = j
+                pos += 1
+
+    c, e, nv = frame[0], frame[1], frame[2]
+    n = Ts.shape[1] - skip
+    limit = n * max_rel ** 2
+    n_t = Ts.shape[0]
+    a_out = np.empty((n_t, H), np.complex128)
+    b_out = np.empty((n_t, H), np.complex128)
+    sse = np.full((n_t, H), np.inf)
+    for h in prange(n_t * H):
+        t = h // H
+        hh = h % H
+        T = Ts[t]
+        a = (P[jj[hh]] - P[ii[hh]]) / (T[ib] - T[ia])
+        b = P[ii[hh]] - a * T[ia]  # template centroid is 0, so b is where the figure's center lands
+        a_out[t, hh] = a
+        b_out[t, hh] = b
+        # Ownership: the figure's center must fall in this tile's Voronoi cell (and the region).
+        x = -b.real * (np.pi / 180.0)
+        y = b.imag * (np.pi / 180.0)
+        r2 = x * x + y * y
+        f1 = 4.0 * x / (4.0 + r2)
+        f2 = 4.0 * y / (4.0 + r2)
+        f3 = (4.0 - r2) / (4.0 + r2)
+        v0 = f1 * e[0] + f2 * nv[0] + f3 * c[0]
+        v1 = f1 * e[1] + f2 * nv[1] + f3 * c[1]
+        v2 = f1 * e[2] + f2 * nv[2] + f3 * c[2]
+        own_dot = v0 * c[0] + v1 * c[1] + v2 * c[2]
+        owned = True
+        for u in range(near_centers.shape[0]):
+            if v0 * near_centers[u, 0] + v1 * near_centers[u, 1] + v2 * near_centers[u, 2] > own_dot + 1e-12:
+                owned = False
+                break
+        if owned and region_cos > -2.0:
+            owned = v0 * region_c[0] + v1 * region_c[1] + v2 * region_c[2] >= region_cos
+        if not owned:
+            continue
+        s = abs(a)
+        R = tol * s
+        acc = 0.0
+        misses = 0
+        alive = True
+        for k in order:
+            d = _grid_nearest(P, grid, g, a * T[k] + b, R)
+            if d == np.inf:
+                misses += 1
+                if misses > skip:
+                    alive = False
+                    break
+            else:
+                acc += (d / s) ** 2
+                if acc > limit:
+                    alive = False
+                    break
+        if alive:
+            sse[t, hh] = acc
+    return a_out, b_out, sse
+
+
+@njit(parallel=True, cache=True)
+def _refine_batch(T, P, A, B, smin, smax, skip, iters, k):
+    H = len(A)
+    stars = np.empty((H, len(T)), np.int64)
+    a_out = np.empty(H, np.complex128)
+    b_out = np.empty(H, np.complex128)
+    score = np.empty(H)
+    no_force = np.zeros(len(T), np.bool_)
+    for h in prange(H):
+        s, a, b, sc = _refine_nb(T, P, A[h], B[h], smin, smax, skip, no_force, iters, k)
+        stars[h] = s
+        a_out[h] = a
+        b_out[h] = b
+        score[h] = sc
+    return stars, a_out, b_out, score
+
+
+@njit(parallel=True, cache=True)
+def _refine_each_forced(T, P, a, b, smin, smax, extra, iters, k):
+    """Refine once per atom, with that atom forced starless (plus `extra` greedy drops)."""
+    n = len(T)
+    stars = np.empty((n, n), np.int64)
+    a_out = np.empty(n, np.complex128)
+    b_out = np.empty(n, np.complex128)
+    score = np.empty(n)
+    for i in prange(n):
+        f = np.zeros(n, np.bool_)
+        f[i] = True
+        s, a2, b2, sc = _refine_nb(T, P, a, b, smin, smax, extra, f, iters, k)
+        stars[i] = s
+        a_out[i] = a2
+        b_out[i] = b2
+        score[i] = sc
+    return stars, a_out, b_out, score
 
 
 # ---------------------------------------------------------------------------
@@ -259,39 +633,18 @@ def fit_similarity(src, dst, smin=0.0, smax=np.inf):
     return a, dc - a * sc
 
 
-def refine(T, P, tree, a, b, smin, smax, skip=0, forced=(), iters=12, k=6):
+def refine(T, P, a, b, smin, smax, skip=0, forced=(), iters=12, k=6):
     """Alternate one-to-one star assignment (Hungarian) and similarity refit until stable.
+    Candidates are the k nearest stars of every predicted atom position.
 
     The atoms in `forced`, plus the `skip` worst-fitting others, go without a star: they are left
     out of the assignment and the fit and just become line corners on the chart (trimmed ICP).
-    Returns (stars, a, b, score) with stars[i] = -1 for starless atoms."""
-    n = len(T)
-    forced = list(forced)
-    n_drop = len(forced) + skip
-    k = min(k, len(P))
-    state = None
-    for _ in range(iters):
-        pred = a * T + b
-        _, nn = tree.query(_xy(pred), k=k)
-        cand = np.unique(nn)
-        if len(cand) < n:
-            return None
-        cost = np.abs(pred[:, None] - P[cand][None, :]) ** 2
-        use = np.ones(n, dtype=bool)
-        if n_drop:
-            _, cols = linear_sum_assignment(cost)
-            resid = cost[np.arange(n), cols]
-            resid[forced] = np.inf
-            use[np.argsort(-resid)[:n_drop]] = False
-        _, cols = linear_sum_assignment(cost[use])
-        stars = np.full(n, -1)
-        stars[use] = cand[cols]
-        if state is not None and np.array_equal(stars, state):
-            break
-        state = stars
-        a, b = fit_similarity(T[use], P[stars[use]], smin, smax)
-    use = stars >= 0
-    score = np.sqrt(np.mean(np.abs(a * T[use] + b - P[stars[use]]) ** 2)) / abs(a)
+    Returns (stars, a, b, score) with stars[i] = -1 for starless atoms, or None."""
+    f = np.zeros(len(T), dtype=np.bool_)
+    f[list(forced)] = True
+    stars, a, b, score = _refine_nb(T, P, complex(a), complex(b), smin, smax, skip, f, iters, k)
+    if not np.isfinite(score):
+        return None
     return stars, a, b, score
 
 
@@ -321,43 +674,22 @@ class Match:
         return self.score * self.bond_deg * 60.0
 
 
-def _hypotheses(T, anchors, order, P, tree, cand_i, in_cell, smin, smax, tol, max_rel, keep, skip):
+def _hypotheses(Ts, anchors, order, P, grid, g, cand_i, frame, near_centers, region,
+                smin, smax, tol, max_rel, keep, skip):
     """Every star pair (i, j) that could host the anchor atoms defines one similarity
     transform. Score all of them atom by atom against the nearest stars, pruning early.
-    Up to `skip` atoms may miss (no star within tol) without killing the hypothesis."""
-    ia, ib = anchors
-    D = abs(T[ib] - T[ia])
-    nbrs = tree.query_ball_point(_xy(P[cand_i]), r=smax * D)
-    counts = np.array([len(x) for x in nbrs])
-    if counts.sum() == 0:
-        return []
-    ii = np.repeat(cand_i, counts)
-    jj = np.concatenate([np.asarray(x, dtype=int) for x in nbrs])
-    ok = np.abs(P[jj] - P[ii]) >= smin * D
-    ii, jj = ii[ok], jj[ok]
-
-    a = (P[jj] - P[ii]) / (T[ib] - T[ia])
-    b = P[ii] - a * T[ia]  # template centroid is 0, so b is where the figure's center lands
-    owned = in_cell(b)
-    a, b = a[owned], b[owned]
-    if len(a) == 0:
-        return []
-
-    n = len(T) - skip
-    sse = np.zeros(len(a))
-    misses = np.zeros(len(a), dtype=int)
-    alive = np.arange(len(a))
-    for k in order:
-        d, _ = tree.query(_xy(a[alive] * T[k] + b[alive]), workers=-1)
-        rel2 = (d / np.abs(a[alive])) ** 2
-        miss = rel2 > tol ** 2
-        misses[alive] += miss
-        sse[alive] += np.where(miss, 0.0, rel2)
-        alive = alive[(misses[alive] <= skip) & (sse[alive] <= n * max_rel ** 2)]
-        if len(alive) == 0:
-            return []
-    best = alive[np.argsort(sse[alive])[:keep]]
-    return list(zip(a[best], b[best]))
+    Up to `skip` atoms may miss (no star within tol) without killing the hypothesis.
+    Returns, per template in Ts, the `keep` best surviving (a, b) as two arrays."""
+    region_c, region_cos = region if region is not None else (np.zeros(3), -3.0)
+    a, b, sse = _hypotheses_nb(Ts, anchors[0], anchors[1], np.asarray(order, dtype=np.int64), P, grid, g,
+                               cand_i, smin, smax, tol, max_rel, skip, frame, near_centers,
+                               region_c, region_cos)
+    out = []
+    for t in range(len(Ts)):
+        alive = np.flatnonzero(np.isfinite(sse[t]))
+        best = alive[np.argsort(sse[t, alive], kind="stable")[:keep]]
+        out.append((a[t, best], b[t, best]))
+    return out
 
 
 def _polish(T, mirrored, stars, cat_xyz, smin, smax, skip):
@@ -371,21 +703,23 @@ def _polish(T, mirrored, stars, cat_xyz, smin, smax, skip):
     r = np.arccos(np.clip(cat_xyz[used] @ center, -1, 1)).max() + 2 * smax * DEG
     field = np.flatnonzero(cat_xyz @ center >= np.cos(min(r, 80 * DEG)))
     P = project(cat_xyz[field], center)
-    tree = cKDTree(_xy(P))
     keep = stars >= 0
     a, b = fit_similarity(T[keep], P[np.searchsorted(field, stars[keep])], smin, smax)
 
     out = []
     for k in range(skip + 1):
-        tries = [((), 0)] if k == 0 else [((i,), k - 1) for i in range(len(T))]
-        best = None
-        for forced, extra in tries:
-            res = refine(T, P, tree, a, b, smin, smax, skip=extra, forced=forced)
-            if res is not None and (best is None or res[3] < best[3]):
-                best = res
-        if best is not None:
-            s, a2, b2, score = best
-            out.append(Match(np.where(s >= 0, field[np.maximum(s, 0)], -1), mirrored, center, a2, b2, score))
+        if k == 0:
+            res = refine(T, P, a, b, smin, smax)
+            if res is None:
+                continue
+            s, a2, b2, score = res
+        else:
+            S, A2, B2, scores = _refine_each_forced(T, P, complex(a), complex(b), smin, smax, k - 1, 12, 6)
+            i = int(np.argmin(scores))
+            if not np.isfinite(scores[i]):
+                continue
+            s, a2, b2, score = S[i], A2[i], B2[i], scores[i]
+        out.append(Match(np.where(s >= 0, field[np.maximum(s, 0)], -1), mirrored, center, a2, b2, score))
     return out
 
 
@@ -425,6 +759,7 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
     if not 0 <= skip <= mol.n - 3:
         raise SystemExit(f"--skip must be between 0 and {mol.n - 3} for this molecule.")
     templates = [(False, mol.z)] + ([(True, np.conj(mol.z))] if mirror else [])
+    Ts = np.array([T for _, T in templates])
 
     anchor_sets = []
     for anchors in _anchor_pairs(mol.z, skip + 1):
@@ -433,50 +768,54 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
     r_fig = np.abs(mol.z).max()
 
     xyz = cat.xyz
+    n_tiles = int(np.ceil(2.0 / (1.0 - np.cos(tile_deg * DEG))))
+    centers = fibonacci_sphere(n_tiles)
+    cell_radius, cell_neighbors = tile_cells(centers)
+    tiles = np.arange(n_tiles)
     if region is not None:
+        # Same small tiles as the whole-sky search (so the per-tile candidate cap means the same
+        # thing), restricted to tiles that can own a figure center inside the region.
         ra0, dec0, rad = region
-        centers = radec_to_xyz(ra0, dec0)[None, :]
-        cell_r = rad
-    else:
-        n_tiles = int(np.ceil(2.0 / (1.0 - np.cos(tile_deg * DEG))))
-        centers = fibonacci_sphere(n_tiles)
-        cell_r = 2.0 * np.arccos(1.0 - 2.0 / n_tiles) / DEG  # generous bound on cell radius
+        region_c = radec_to_xyz(ra0, dec0)
+        sep = np.arccos(np.clip(centers @ region_c, -1, 1)) / DEG
+        tiles = np.flatnonzero(sep <= rad + cell_radius + 1e-6)
 
+    region_info = None if region is None else (region_c, np.cos(rad * DEG))
+    g = tol * smax / 2  # grid cell size for the star lookups
     t0 = time.time()
     found = {}
-    for t, c in enumerate(centers):
-        if region is not None:
-            def in_cell(w):
-                return np.abs(w) <= cell_r
-        else:
-            near = np.flatnonzero(centers @ c >= np.cos(3 * cell_r * DEG))
-
-            def in_cell(w, c=c, near=near):
-                v = unproject(w, c)
-                return (v @ centers[near].T).max(axis=1) <= v @ c + 1e-12
+    for t_i, t in enumerate(tiles):
+        c = centers[t]
+        cell_r = cell_radius[t] + 1e-6
+        near = cell_neighbors[t]  # a point is in this tile's cell iff it's closer than to these
 
         field_r = min(cell_r + smax * r_fig + smax, 80.0)
         field = np.flatnonzero(xyz @ c >= np.cos(field_r * DEG))
         if len(field) < mol.n:
             continue
         P = project(xyz[field], c)
-        tree = cKDTree(_xy(P))
+        grid = _grid_build(P, g)
+        frame = np.array(tangent_frame(c))
 
         for anchors, order, r_anchor in anchor_sets:
-            cand_i = np.flatnonzero(np.abs(P) <= cell_r + smax * r_anchor)
-            for mirrored, T in templates:
-                hyps = _hypotheses(T, anchors, order, P, tree, cand_i, in_cell,
-                                   smin, smax, tol, max_rel, keep, skip)
-                for a, b in hyps:
-                    res = refine(T, P, tree, a, b, smin, smax, skip=skip)
-                    if res is None:
+            # Plane distance of the cell edge (stereographic stretches by 2 tan(θ/2) / θ) plus
+            # how far the anchor atom can sit from the figure's center.
+            cell_plane = 2.0 * np.tan(cell_r * DEG / 2.0) / DEG
+            cand_i = np.flatnonzero(np.abs(P) <= cell_plane + smax * r_anchor)
+            hyps = _hypotheses(Ts, anchors, order, P, grid, g, cand_i, frame, centers[near],
+                               region_info, smin, smax, tol, max_rel, keep, skip)
+            for (mirrored, T), (A_, B_) in zip(templates, hyps):
+                if len(A_) == 0:
+                    continue
+                S, _, _, scores = _refine_batch(T, P, A_, B_, smin, smax, skip, 12, 6)
+                for stars, score in zip(S, scores):
+                    if not np.isfinite(score):
                         continue
-                    stars, _, _, score = res
                     key = (mirrored, tuple(np.where(stars >= 0, field[np.maximum(stars, 0)], -1)))
                     if score < found.get(key, np.inf):
                         found[key] = score
-        if verbose and (t % 25 == 0 or t == len(centers) - 1):
-            print(f"\r  searched {t + 1}/{len(centers)} sky tiles, {len(found)} candidate figures "
+        if verbose and (t_i % 25 == 0 or t_i == len(tiles) - 1):
+            print(f"\r  searched {t_i + 1}/{len(tiles)} sky tiles, {len(found)} candidate figures "
                   f"({time.time() - t0:.0f}s)", end="", flush=True)
     if verbose:
         print()

@@ -96,12 +96,22 @@ def test_skip_leaves_missing_atom_starless(drop):
     assert best.score < min(m.score for m in matches if m.n_skipped == 0)
 
 
+def test_lsap_matches_scipy():
+    from scipy.optimize import linear_sum_assignment
+    rng = np.random.default_rng(3)
+    for n, m in [(1, 1), (5, 5), (7, 12), (20, 60)]:
+        cost = rng.uniform(size=(n, m))
+        rows, cols = linear_sum_assignment(cost)
+        ours = A._lsap(cost)
+        assert len(set(ours)) == n
+        assert cost[np.arange(n), ours].sum() == pytest.approx(cost[rows, cols].sum())
+
+
 def test_refine_forced_skip():
     rng = np.random.default_rng(1)
     T = rng.normal(size=8) + 1j * rng.normal(size=8)
     P = np.concatenate([2 * T + 1, rng.normal(size=30) * 6 + 1j * rng.normal(size=30) * 6])
-    from scipy.spatial import cKDTree
-    stars, a, b, score = A.refine(T, P, cKDTree(A._xy(P)), 2.0, 1.0, 0.5, 4.0, forced=(3,))
+    stars, a, b, score = A.refine(T, P, 2.0, 1.0, 0.5, 4.0, forced=(3,))
     assert stars[3] == -1
     assert all(stars[i] == i for i in range(8) if i != 3)
     assert score == pytest.approx(0.0, abs=1e-9)

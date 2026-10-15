@@ -32,7 +32,8 @@ python astrocule.py melatonin                       # anything else is looked up
 Built-in names: estradiol, testosterone, progesterone, spironolactone, serotonin, dopamine, caffeine.
 
 The first run downloads the [HYG database](https://github.com/astronexus/HYG-Database) (about 34 MB)
-to `~/.cache/astrocule`. A whole-sky search takes 5 to 10 minutes; `--region` is much faster. It prints a table of candidates
+to `~/.cache/astrocule`. A whole-sky search takes about 15 seconds on 4 cores (plus about 30 seconds of one-time numba
+compilation on the very first run). It prints a table of candidates
 sorted by distortion, then a per-atom star list for the best few. Results go to `./out`: one chart
 per charted candidate plus a JSON file with every candidate and every star (HIP number, RA/Dec,
 magnitude) and how far it sits from its ideal atom position.
@@ -57,10 +58,11 @@ magnitude) and how far it sits from its ideal atom position.
 
 1. **Molecule.** RDKit parses the SMILES, kekulizes aromatic rings and draws a CoordGen 2D layout,
    scaled to unit bond length.
-2. **Hypotheses.** The sky is split into tiles. In each tile, every pair of stars that could hold the
-   molecule's two farthest-apart atoms defines one rotation + scale + shift. All atoms of that
-   hypothesis are checked against the nearest stars, and hypotheses are pruned atom by atom as soon as
-   they can't end up good.
+2. **Hypotheses.** The sky is split into ~370 tiles (Voronoi cells of a Fibonacci sphere). In each
+   tile, every pair of stars that could hold the molecule's two farthest-apart atoms defines one
+   rotation + scale + shift, and the tile owns it if the figure's center falls in its cell. All atoms
+   of that hypothesis are checked against the nearest stars, and hypotheses are pruned atom by atom
+   as soon as they can't end up good. `--region` uses the same tiles, just fewer of them.
 3. **Refinement.** Survivors alternate a strict one-star-per-atom assignment (Hungarian algorithm) with
    a least-squares similarity fit until the assignment stops changing.
 4. **Starless atoms.** With `--skip K`, up to K atoms may go without a star. Hypotheses tolerate K
@@ -70,6 +72,10 @@ magnitude) and how far it sits from its ideal atom position.
    chart share one nearly distortion-free frame. Projection is stereographic, which preserves shapes
    locally. While polishing, every atom is tried as the starless one, and the best figure is kept for
    each number of starless atoms from 0 to K.
+
+The hot loops (hypothesis scoring on a grid index, the Hungarian algorithm, refinement) are numba
+kernels running in parallel. `python bench/bench.py` (or `--sky`) times the search and prints a
+fingerprint of the results, so speedups can be checked for identical output.
 
 The score is the RMSD between the stars and the ideal atom positions, in units of the bond length.
 0.1 means stars are off by a tenth of a bond on average.
