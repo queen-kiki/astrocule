@@ -32,7 +32,7 @@ python astrocule.py melatonin                       # anything else is looked up
 Built-in names: estradiol, testosterone, progesterone, spironolactone, serotonin, dopamine, caffeine.
 
 The first run downloads the [HYG database](https://github.com/astronexus/HYG-Database) (about 34 MB)
-to `~/.cache/astrocule`. A whole-sky search takes about 15 seconds on 4 cores (plus about 30 seconds of one-time numba
+to `~/.cache/astrocule`. A whole-sky search takes about 10 seconds on 4 cores (plus about 30 seconds of one-time numba
 compilation on the very first run). It prints a table of candidates
 sorted by distortion, then a per-atom star list for the best few. Results go to `./out`: one chart
 per charted candidate plus a JSON file with every candidate and every star (HIP number, RA/Dec,
@@ -50,6 +50,7 @@ magnitude) and how far it sits from its ideal atom position.
 | `--north-up` | | draw charts north-up instead of turning the molecule upright |
 | `--labels` | | label heteroatoms (O, N, ...) with their element |
 | `--star-names` | | label named background stars |
+| `--workers` | all cores | threads to use |
 | `--tattoo` | | also write stencil-ready line art (SVG + PNG) for every charted candidate |
 | `--tattoo-stars N` | 8 | how many of the brightest nearby stars to add to the tattoo art |
 | `--no-tattoo-text` | | leave the coordinates off the tattoo art |
@@ -74,7 +75,8 @@ magnitude) and how far it sits from its ideal atom position.
    each number of starless atoms from 0 to K.
 
 The hot loops (hypothesis scoring on a grid index, the Hungarian algorithm, refinement) are numba
-kernels running in parallel. `python bench/bench.py` (or `--sky`) times the search and prints a
+kernels that release the GIL, and a thread pool runs the sky tiles and the polish step on all cores
+(3.5x on 4 cores). `python bench/bench.py` (or `--sky`) times the search and prints a
 fingerprint of the results, so speedups can be checked for identical output.
 
 The score is the RMSD between the stars and the ideal atom positions, in units of the bond length.

@@ -19,13 +19,14 @@ import os
 import re
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from numba import njit, prange
+from numba import njit
 from scipy.spatial import ConvexHull, Delaunay
 
 DEG = np.pi / 180.0
@@ -264,7 +265,7 @@ def _xy(w):
 # Numba kernels (the hot loops of the search)
 # ---------------------------------------------------------------------------
 
-@njit(cache=True)
+@njit(nogil=True, cache=True)
 def _lsap(cost):
     """Minimum-cost assignment of every row to a distinct column (rows <= cols).
     Shortest augmenting path Hungarian algorithm, O(rows^2 * cols)."""
@@ -317,7 +318,7 @@ def _lsap(cost):
     return out
 
 
-@njit(cache=True)
+@njit(nogil=True, cache=True)
 def _fit_nb(src, dst, smin, smax):
     sc = src.mean()
     dc = dst.mean()
@@ -333,7 +334,7 @@ def _fit_nb(src, dst, smin, smax):
     return a, dc - a * sc
 
 
-@njit(cache=True)
+@njit(nogil=True, cache=True)
 def _refine_nb(T, P_all, a, b, smin, smax, skip, forced, iters, k):
     # Only stars that can plausibly be among an atom's k nearest: within the figure's radius plus
     # 1.5 bond lengths of where it starts. Brute force over those beats a k-d tree here.
@@ -446,7 +447,7 @@ def _refine_nb(T, P_all, a, b, smin, smax, skip, forced, iters, k):
     return stars, a, b, np.sqrt(sq / cnt) / abs(a)
 
 
-@njit(cache=True)
+@njit(nogil=True, cache=True)
 def _grid_build(P, g):
     """Bucket points into square cells of size g (CSR layout) for radius queries."""
     x0 = P.real.min() - g
@@ -465,7 +466,7 @@ def _grid_build(P, g):
     return order, start, x0, y0, nx, ny
 
 
-@njit(cache=True)
+@njit(nogil=True, cache=True)
 def _grid_nearest(P, grid, g, w, R):
     """Distance from w to the nearest point of P within R, or inf if there is none."""
     order, start, x0, y0, nx, ny = grid
@@ -487,7 +488,7 @@ def _grid_nearest(P, grid, g, w, R):
     return np.sqrt(best) if found else np.inf
 
 
-@njit(parallel=True, cache=True)
+@njit(nogil=True, cache=True)
 def _hypotheses_nb(Ts, ia, ib, order, P, grid, g, cand_i, smin, smax, tol, max_rel, skip,
                    frame, near_centers, region_c, region_cos):
     """Score every anchor-pair hypothesis of one tile, for each template in Ts (the drawing and
@@ -500,7 +501,7 @@ def _hypotheses_nb(Ts, ia, ib, order, P, grid, g, cand_i, smin, smax, tol, max_r
 
     # Star pairs (i, j) whose separation fits the anchor atoms' distance at an allowed scale.
     counts = np.zeros(len(cand_i), np.int64)
-    for q in prange(len(cand_i)):
+    for q in range(len(cand_i)):
         pi = P[cand_i[q]]
         cnt = 0
         for j in range(M):
@@ -515,7 +516,7 @@ def _hypotheses_nb(Ts, ia, ib, order, P, grid, g, cand_i, smin, smax, tol, max_r
     H = offs[-1]
     ii = np.empty(H, np.int64)
     jj = np.empty(H, np.int64)
-    for q in prange(len(cand_i)):
+    for q in range(len(cand_i)):
         pi = P[cand_i[q]]
         pos = offs[q]
         for j in range(M):
@@ -533,7 +534,7 @@ def _hypotheses_nb(Ts, ia, ib, order, P, grid, g, cand_i, smin, smax, tol, max_r
     a_out = np.empty((n_t, H), np.complex128)
     b_out = np.empty((n_t, H), np.complex128)
     sse = np.full((n_t, H), np.inf)
-    for h in prange(n_t * H):
+    for h in range(n_t * H):
         t = h // H
         hh = h % H
         T = Ts[t]
@@ -583,7 +584,7 @@ def _hypotheses_nb(Ts, ia, ib, order, P, grid, g, cand_i, smin, smax, tol, max_r
     return a_out, b_out, sse
 
 
-@njit(parallel=True, cache=True)
+@njit(nogil=True, cache=True)
 def _refine_batch(T, P, A, B, smin, smax, skip, iters, k):
     H = len(A)
     stars = np.empty((H, len(T)), np.int64)
@@ -591,7 +592,7 @@ def _refine_batch(T, P, A, B, smin, smax, skip, iters, k):
     b_out = np.empty(H, np.complex128)
     score = np.empty(H)
     no_force = np.zeros(len(T), np.bool_)
-    for h in prange(H):
+    for h in range(H):
         s, a, b, sc = _refine_nb(T, P, A[h], B[h], smin, smax, skip, no_force, iters, k)
         stars[h] = s
         a_out[h] = a
@@ -600,7 +601,7 @@ def _refine_batch(T, P, A, B, smin, smax, skip, iters, k):
     return stars, a_out, b_out, score
 
 
-@njit(parallel=True, cache=True)
+@njit(nogil=True, cache=True)
 def _refine_each_forced(T, P, a, b, smin, smax, extra, iters, k):
     """Refine once per atom, with that atom forced starless (plus `extra` greedy drops)."""
     n = len(T)
@@ -608,7 +609,7 @@ def _refine_each_forced(T, P, a, b, smin, smax, extra, iters, k):
     a_out = np.empty(n, np.complex128)
     b_out = np.empty(n, np.complex128)
     score = np.empty(n)
-    for i in prange(n):
+    for i in range(n):
         f = np.zeros(n, np.bool_)
         f[i] = True
         s, a2, b2, sc = _refine_nb(T, P, a, b, smin, smax, extra, f, iters, k)
@@ -740,7 +741,7 @@ def _anchor_pairs(z, count):
 
 
 def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, top=10,
-                   tol=0.6, max_rel=0.4, keep=150, polish=600, tile_deg=6.0, verbose=True):
+                   tol=0.6, max_rel=0.4, keep=150, polish=600, tile_deg=6.0, workers=None, verbose=True):
     """
     Search the sky for the star sets that best trace mol's skeleton.
 
@@ -748,6 +749,7 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
     region:  optional (ra_deg, dec_deg, radius_deg) to restrict where the figure's center may lie
     mirror:  also allow the mirror image of the 2D drawing
     skip:    allow up to this many atoms without a star (drawn as plain line corners)
+    workers: threads to use (default: all cores)
     polish:  how many of the best raw candidates to re-fit in their own frame. Raw scores come from
              tile projections not centered on the figure, so be generous here.
     Returns up to `top` matches sorted by distortion, at least one per number of starless atoms,
@@ -781,26 +783,25 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
         tiles = np.flatnonzero(sep <= rad + cell_radius + 1e-6)
 
     region_info = None if region is None else (region_c, np.cos(rad * DEG))
+    workers = workers or os.cpu_count() or 1
     g = tol * smax / 2  # grid cell size for the star lookups
-    t0 = time.time()
-    found = {}
-    for t_i, t in enumerate(tiles):
+    def search_tile(t):
+        """All figures whose center falls in tile t, as {(mirrored, stars): score}."""
+        out = {}
         c = centers[t]
         cell_r = cell_radius[t] + 1e-6
         near = cell_neighbors[t]  # a point is in this tile's cell iff it's closer than to these
-
         field_r = min(cell_r + smax * r_fig + smax, 80.0)
         field = np.flatnonzero(xyz @ c >= np.cos(field_r * DEG))
         if len(field) < mol.n:
-            continue
+            return out
         P = project(xyz[field], c)
         grid = _grid_build(P, g)
         frame = np.array(tangent_frame(c))
-
+        # Plane distance of the cell edge (stereographic stretches by 2 tan(θ/2) / θ).
+        cell_plane = 2.0 * np.tan(cell_r * DEG / 2.0) / DEG
         for anchors, order, r_anchor in anchor_sets:
-            # Plane distance of the cell edge (stereographic stretches by 2 tan(θ/2) / θ) plus
-            # how far the anchor atom can sit from the figure's center.
-            cell_plane = 2.0 * np.tan(cell_r * DEG / 2.0) / DEG
+            # The anchor atom can sit up to smax * r_anchor from the figure's center.
             cand_i = np.flatnonzero(np.abs(P) <= cell_plane + smax * r_anchor)
             hyps = _hypotheses(Ts, anchors, order, P, grid, g, cand_i, frame, centers[near],
                                region_info, smin, smax, tol, max_rel, keep, skip)
@@ -808,26 +809,40 @@ def find_asterisms(mol, cat, bond=(1.0, 3.0), region=None, mirror=True, skip=0, 
                 if len(A_) == 0:
                     continue
                 S, _, _, scores = _refine_batch(T, P, A_, B_, smin, smax, skip, 12, 6)
-                for stars, score in zip(S, scores):
-                    if not np.isfinite(score):
-                        continue
-                    key = (mirrored, tuple(np.where(stars >= 0, field[np.maximum(stars, 0)], -1)))
-                    if score < found.get(key, np.inf):
-                        found[key] = score
-        if verbose and (t_i % 25 == 0 or t_i == len(tiles) - 1):
-            print(f"\r  searched {t_i + 1}/{len(tiles)} sky tiles, {len(found)} candidate figures "
-                  f"({time.time() - t0:.0f}s)", end="", flush=True)
-    if verbose:
-        print()
+                ok = np.isfinite(scores)
+                S, scores = S[ok], scores[ok]
+                S = np.where(S >= 0, field[np.maximum(S, 0)], -1)
+                for stars, score in zip(S.tolist(), scores.tolist()):
+                    key = (mirrored, tuple(stars))
+                    if score < out.get(key, np.inf):
+                        out[key] = score
+        return out
 
-    best = sorted(found.items(), key=lambda kv: kv[1])[: max(polish, 10 * top)]
-    tmpl = dict(templates)
-    polished = {}
-    for (mirrored, stars), _ in best:
-        for m in _polish(tmpl[mirrored], mirrored, np.array(stars), xyz, smin, smax, skip):
-            key = (mirrored, tuple(m.stars))
-            if key not in polished or m.score < polished[key].score:
-                polished[key] = m
+    # Tiles run on a thread pool; the numba kernels release the GIL, so this uses every core with
+    # coarse, evenly balanced chunks of work.
+    t0 = time.time()
+    found = {}
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for done, fut in enumerate(as_completed([pool.submit(search_tile, t) for t in tiles]), 1):
+            for key, score in fut.result().items():
+                if score < found.get(key, np.inf):
+                    found[key] = score
+            if verbose and (done % 25 == 0 or done == len(tiles)):
+                print(f"\r  searched {done}/{len(tiles)} sky tiles, {len(found)} candidate figures "
+                      f"({time.time() - t0:.0f}s)", end="", flush=True)
+        if verbose:
+            print()
+
+        best = sorted(found.items(), key=lambda kv: kv[1])[: max(polish, 10 * top)]
+        tmpl = dict(templates)
+        jobs = [pool.submit(_polish, tmpl[mirrored], mirrored, np.array(stars), xyz, smin, smax, skip)
+                for (mirrored, stars), _ in best]
+        polished = {}
+        for fut in jobs:
+            for m in fut.result():
+                key = (m.mirrored, tuple(m.stars))
+                if key not in polished or m.score < polished[key].score:
+                    polished[key] = m
 
     ranked = sorted(polished.values(), key=lambda m: m.score)
     results = []
@@ -1156,6 +1171,7 @@ def main(argv=None):
     p.add_argument("--tattoo-stars", type=int, default=8, metavar="N",
                    help="how many of the brightest nearby stars to add to the tattoo art (default 8)")
     p.add_argument("--no-tattoo-text", action="store_true", help="leave the coordinates off the tattoo art")
+    p.add_argument("--workers", type=int, help="threads to use (default: all cores)")
     p.add_argument("--catalog", help="path to a local hygdata_v41.csv instead of downloading it")
     args = p.parse_args(argv)
 
@@ -1167,7 +1183,7 @@ def main(argv=None):
     print(f"{len(cat.hip)} stars brighter than mag {args.mag}")
 
     matches = find_asterisms(mol, cat, bond=tuple(args.bond), region=args.region,
-                             mirror=not args.no_mirror, skip=args.skip, top=args.top)
+                             mirror=not args.no_mirror, skip=args.skip, top=args.top, workers=args.workers)
     if not matches:
         raise SystemExit("No match found. Try a fainter --mag, a wider --bond range or a bigger --region.")
 
