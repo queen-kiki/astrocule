@@ -38,6 +38,10 @@ DEG = np.pi / 180.0
 
 KNOWN_MOLECULES = {
     "estradiol": ("17β-Estradiol", "C[C@]12CC[C@H]3[C@H]([C@@H]1CC[C@@H]2O)CCC4=C3C=CC(=C4)O"),
+    "estradiol enanthate": (
+        "Estradiol enanthate",
+        "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    ),
     "testosterone": ("Testosterone", "C[C@]12CC[C@H]3[C@H]([C@@H]1CC[C@@H]2O)CCC4=CC(=O)CC[C@]34C"),
     "progesterone": ("Progesterone", "CC(=O)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=CC(=O)CC[C@]34C)C"),
     "spironolactone": (

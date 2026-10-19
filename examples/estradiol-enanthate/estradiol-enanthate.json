@@ -1,0 +1,3054 @@
+[
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 148.04042,
+    "dec_deg": -57.55872,
+    "ra": "09h 52m 09.7s",
+    "dec": "-57° 33′ 31″",
+    "ra_hms": "09h 52m 10s",
+    "constellation": "Carina",
+    "constellations": [
+      "Crux",
+      "Centaurus",
+      "Carina",
+      "Vela"
+    ],
+    "distortion": 0.136,
+    "rmsd_arcmin": 23.56,
+    "bond_deg": 2.888,
+    "mirrored": false,
+    "starless_atoms": [
+      "C4"
+    ],
+    "brightest_mag": 1.25,
+    "faintest_mag": 6.48,
+    "brighter_intruders": 80,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 62434,
+        "name": "Mimosa",
+        "ra_deg": 191.93039,
+        "dec_deg": -59.68876,
+        "mag": 1.25,
+        "offset_arcmin": 10.76
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 60781,
+        "name": "",
+        "ra_deg": 186.87028,
+        "dec_deg": -58.99176,
+        "mag": 5.38,
+        "offset_arcmin": 4.78
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 59200,
+        "name": "",
+        "ra_deg": 182.10306,
+        "dec_deg": -60.84713,
+        "mag": 6.22,
+        "offset_arcmin": 19.64
+      },
+      {
+        "atom": "C4",
+        "starless": true
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 56201,
+        "name": "",
+        "ra_deg": 172.8127,
+        "dec_deg": -61.27846,
+        "mag": 6.28,
+        "offset_arcmin": 9.46
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 54829,
+        "name": "",
+        "ra_deg": 168.37828,
+        "dec_deg": -59.61932,
+        "mag": 5.74,
+        "offset_arcmin": 19.07
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 52679,
+        "name": "",
+        "ra_deg": 161.57121,
+        "dec_deg": -60.60287,
+        "mag": 6.26,
+        "offset_arcmin": 27.52
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 52502,
+        "name": "",
+        "ra_deg": 161.02887,
+        "dec_deg": -63.96107,
+        "mag": 4.8,
+        "offset_arcmin": 25.36
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 51623,
+        "name": "",
+        "ra_deg": 158.19922,
+        "dec_deg": -58.66674,
+        "mag": 5.98,
+        "offset_arcmin": 12.28
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 50044,
+        "name": "",
+        "ra_deg": 153.25482,
+        "dec_deg": -59.91809,
+        "mag": 6.07,
+        "offset_arcmin": 25.45
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 49223,
+        "name": "",
+        "ra_deg": 150.7059,
+        "dec_deg": -62.15667,
+        "mag": 6.41,
+        "offset_arcmin": 14.44
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 47391,
+        "name": "",
+        "ra_deg": 144.83758,
+        "dec_deg": -61.32806,
+        "mag": 4.51,
+        "offset_arcmin": 30.76
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 46974,
+        "name": "",
+        "ra_deg": 143.61106,
+        "dec_deg": -59.22975,
+        "mag": 4.08,
+        "offset_arcmin": 22.42
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 49160,
+        "name": "",
+        "ra_deg": 150.49196,
+        "dec_deg": -57.34979,
+        "mag": 6.2,
+        "offset_arcmin": 62.44
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 48774,
+        "name": "",
+        "ra_deg": 149.21562,
+        "dec_deg": -54.56779,
+        "mag": 3.52,
+        "offset_arcmin": 16.04
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 47172,
+        "name": "",
+        "ra_deg": 144.19308,
+        "dec_deg": -52.94367,
+        "mag": 6.18,
+        "offset_arcmin": 25.55
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 45603,
+        "name": "",
+        "ra_deg": 139.42623,
+        "dec_deg": -54.49483,
+        "mag": 6.33,
+        "offset_arcmin": 35.9
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 45496,
+        "name": "",
+        "ra_deg": 139.05036,
+        "dec_deg": -57.54147,
+        "mag": 4.34,
+        "offset_arcmin": 32.15
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 43763,
+        "name": "",
+        "ra_deg": 133.72517,
+        "dec_deg": -58.23966,
+        "mag": 6.36,
+        "offset_arcmin": 27.67
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 42717,
+        "name": "",
+        "ra_deg": 130.58689,
+        "dec_deg": -55.77456,
+        "mag": 6.26,
+        "offset_arcmin": 4.2
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 43195,
+        "name": "",
+        "ra_deg": 132.00096,
+        "dec_deg": -52.85015,
+        "mag": 6.29,
+        "offset_arcmin": 14.65
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 45002,
+        "name": "",
+        "ra_deg": 137.48791,
+        "dec_deg": -52.08286,
+        "mag": 6.19,
+        "offset_arcmin": 32.0
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 44979,
+        "name": "",
+        "ra_deg": 137.43749,
+        "dec_deg": -49.42438,
+        "mag": 6.48,
+        "offset_arcmin": 10.43
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 44093,
+        "name": "",
+        "ra_deg": 134.71824,
+        "dec_deg": -47.23469,
+        "mag": 5.17,
+        "offset_arcmin": 21.55
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 42712,
+        "name": "",
+        "ra_deg": 130.56747,
+        "dec_deg": -48.09909,
+        "mag": 5.48,
+        "offset_arcmin": 12.04
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 42177,
+        "name": "",
+        "ra_deg": 128.9668,
+        "dec_deg": -50.96965,
+        "mag": 5.79,
+        "offset_arcmin": 1.95
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 41674,
+        "name": "",
+        "ra_deg": 127.44016,
+        "dec_deg": -46.33169,
+        "mag": 5.98,
+        "offset_arcmin": 14.62
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 50069,
+        "name": "",
+        "ra_deg": 153.34292,
+        "dec_deg": -56.5867,
+        "mag": 6.48,
+        "offset_arcmin": 7.72
+      }
+    ],
+    "rank": 1,
+    "chart": "examples/estradiol-enanthate/estradiol-enanthate_1.png",
+    "tattoo": [
+      "examples/estradiol-enanthate/estradiol-enanthate_1_tattoo.svg",
+      "examples/estradiol-enanthate/estradiol-enanthate_1_tattoo.png"
+    ]
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 123.80608,
+    "dec_deg": -45.65861,
+    "ra": "08h 15m 13.5s",
+    "dec": "-45° 39′ 31″",
+    "ra_hms": "08h 15m 13s",
+    "constellation": "Vela",
+    "constellations": [
+      "Canis Major",
+      "Puppis",
+      "Vela",
+      "Carina"
+    ],
+    "distortion": 0.1409,
+    "rmsd_arcmin": 24.29,
+    "bond_deg": 2.874,
+    "mirrored": false,
+    "starless_atoms": [
+      "C11"
+    ],
+    "brightest_mag": 4.11,
+    "faintest_mag": 6.48,
+    "brighter_intruders": 63,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 34624,
+        "name": "",
+        "ra_deg": 107.58051,
+        "dec_deg": -27.49152,
+        "mag": 5.46,
+        "offset_arcmin": 8.37
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 34782,
+        "name": "",
+        "ra_deg": 108.01705,
+        "dec_deg": -30.82137,
+        "mag": 6.1,
+        "offset_arcmin": 27.81
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 35795,
+        "name": "",
+        "ra_deg": 110.7529,
+        "dec_deg": -31.92378,
+        "mag": 5.4,
+        "offset_arcmin": 21.97
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 36143,
+        "name": "",
+        "ra_deg": 111.67695,
+        "dec_deg": -34.14069,
+        "mag": 5.9,
+        "offset_arcmin": 29.26
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 37096,
+        "name": "",
+        "ra_deg": 114.34213,
+        "dec_deg": -34.96853,
+        "mag": 4.53,
+        "offset_arcmin": 30.66
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 37297,
+        "name": "",
+        "ra_deg": 114.86392,
+        "dec_deg": -38.30802,
+        "mag": 4.84,
+        "offset_arcmin": 1.08
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 38455,
+        "name": "",
+        "ra_deg": 118.16103,
+        "dec_deg": -38.86281,
+        "mag": 4.49,
+        "offset_arcmin": 26.79
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 39251,
+        "name": "",
+        "ra_deg": 120.40637,
+        "dec_deg": -37.28372,
+        "mag": 5.9,
+        "offset_arcmin": 30.32
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 38845,
+        "name": "",
+        "ra_deg": 119.24094,
+        "dec_deg": -42.40648,
+        "mag": 6.09,
+        "offset_arcmin": 20.87
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 40096,
+        "name": "",
+        "ra_deg": 122.85789,
+        "dec_deg": -42.98728,
+        "mag": 4.73,
+        "offset_arcmin": 6.68
+      },
+      {
+        "atom": "C11",
+        "starless": true
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 42312,
+        "name": "",
+        "ra_deg": 129.41099,
+        "dec_deg": -42.98908,
+        "mag": 4.11,
+        "offset_arcmin": 24.87
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 41941,
+        "name": "",
+        "ra_deg": 128.25775,
+        "dec_deg": -45.75291,
+        "mag": 6.36,
+        "offset_arcmin": 16.23
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 40357,
+        "name": "",
+        "ra_deg": 123.59947,
+        "dec_deg": -45.83452,
+        "mag": 5.86,
+        "offset_arcmin": 22.0
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 39970,
+        "name": "",
+        "ra_deg": 122.42982,
+        "dec_deg": -47.93719,
+        "mag": 5.23,
+        "offset_arcmin": 21.7
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 40433,
+        "name": "",
+        "ra_deg": 123.84691,
+        "dec_deg": -50.44922,
+        "mag": 6.44,
+        "offset_arcmin": 25.15
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 42088,
+        "name": "",
+        "ra_deg": 128.68167,
+        "dec_deg": -49.9442,
+        "mag": 5.01,
+        "offset_arcmin": 30.87
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 42712,
+        "name": "",
+        "ra_deg": 130.56747,
+        "dec_deg": -48.09909,
+        "mag": 5.48,
+        "offset_arcmin": 18.27
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 44093,
+        "name": "",
+        "ra_deg": 134.71824,
+        "dec_deg": -47.23469,
+        "mag": 5.17,
+        "offset_arcmin": 9.41
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 44979,
+        "name": "",
+        "ra_deg": 137.43749,
+        "dec_deg": -49.42438,
+        "mag": 6.48,
+        "offset_arcmin": 11.37
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 44337,
+        "name": "",
+        "ra_deg": 135.43569,
+        "dec_deg": -52.18868,
+        "mag": 5.23,
+        "offset_arcmin": 32.7
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 43195,
+        "name": "",
+        "ra_deg": 132.00096,
+        "dec_deg": -52.85015,
+        "mag": 6.29,
+        "offset_arcmin": 13.63
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 42717,
+        "name": "",
+        "ra_deg": 130.58689,
+        "dec_deg": -55.77456,
+        "mag": 6.26,
+        "offset_arcmin": 35.77
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 43499,
+        "name": "",
+        "ra_deg": 132.90217,
+        "dec_deg": -57.63358,
+        "mag": 5.59,
+        "offset_arcmin": 5.34
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 45437,
+        "name": "",
+        "ra_deg": 138.89468,
+        "dec_deg": -57.57774,
+        "mag": 6.32,
+        "offset_arcmin": 41.54
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 45603,
+        "name": "",
+        "ra_deg": 139.42623,
+        "dec_deg": -54.49483,
+        "mag": 6.33,
+        "offset_arcmin": 13.07
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 46620,
+        "name": "",
+        "ra_deg": 142.59765,
+        "dec_deg": -58.36184,
+        "mag": 5.88,
+        "offset_arcmin": 44.49
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 39014,
+        "name": "",
+        "ra_deg": 119.75753,
+        "dec_deg": -45.21584,
+        "mag": 5.98,
+        "offset_arcmin": 16.54
+      }
+    ],
+    "rank": 2,
+    "chart": "examples/estradiol-enanthate/estradiol-enanthate_2.png",
+    "tattoo": [
+      "examples/estradiol-enanthate/estradiol-enanthate_2_tattoo.svg",
+      "examples/estradiol-enanthate/estradiol-enanthate_2_tattoo.png"
+    ]
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 144.24561,
+    "dec_deg": -53.91043,
+    "ra": "09h 36m 58.9s",
+    "dec": "-53° 54′ 38″",
+    "ra_hms": "09h 36m 59s",
+    "constellation": "Vela",
+    "constellations": [
+      "Crux",
+      "Centaurus",
+      "Carina",
+      "Vela"
+    ],
+    "distortion": 0.143,
+    "rmsd_arcmin": 25.47,
+    "bond_deg": 2.968,
+    "mirrored": false,
+    "starless_atoms": [
+      "C21"
+    ],
+    "brightest_mag": 0.77,
+    "faintest_mag": 6.48,
+    "brighter_intruders": 71,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 60718,
+        "name": "Acrux",
+        "ra_deg": 186.64966,
+        "dec_deg": -63.09909,
+        "mag": 0.77,
+        "offset_arcmin": 21.57
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 58921,
+        "name": "",
+        "ra_deg": 181.23846,
+        "dec_deg": -60.96825,
+        "mag": 5.95,
+        "offset_arcmin": 17.45
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 57175,
+        "name": "",
+        "ra_deg": 175.87998,
+        "dec_deg": -62.4894,
+        "mag": 5.0,
+        "offset_arcmin": 9.06
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 55831,
+        "name": "",
+        "ra_deg": 171.64761,
+        "dec_deg": -61.11517,
+        "mag": 5.22,
+        "offset_arcmin": 42.9
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 53701,
+        "name": "",
+        "ra_deg": 164.80845,
+        "dec_deg": -61.32074,
+        "mag": 6.16,
+        "offset_arcmin": 16.29
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 52405,
+        "name": "",
+        "ra_deg": 160.66904,
+        "dec_deg": -59.21576,
+        "mag": 5.36,
+        "offset_arcmin": 31.05
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 50993,
+        "name": "",
+        "ra_deg": 156.24774,
+        "dec_deg": -58.5763,
+        "mag": 5.93,
+        "offset_arcmin": 42.38
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 50067,
+        "name": "",
+        "ra_deg": 153.33829,
+        "dec_deg": -61.65883,
+        "mag": 6.42,
+        "offset_arcmin": 14.99
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 50069,
+        "name": "",
+        "ra_deg": 153.34292,
+        "dec_deg": -56.5867,
+        "mag": 6.48,
+        "offset_arcmin": 19.53
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 48119,
+        "name": "",
+        "ra_deg": 147.16677,
+        "dec_deg": -56.41189,
+        "mag": 6.05,
+        "offset_arcmin": 17.76
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 46974,
+        "name": "",
+        "ra_deg": 143.61106,
+        "dec_deg": -59.22975,
+        "mag": 4.08,
+        "offset_arcmin": 19.93
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 45437,
+        "name": "",
+        "ra_deg": 138.89468,
+        "dec_deg": -57.57774,
+        "mag": 6.32,
+        "offset_arcmin": 5.1
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 45603,
+        "name": "",
+        "ra_deg": 139.42623,
+        "dec_deg": -54.49483,
+        "mag": 6.33,
+        "offset_arcmin": 13.54
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 47204,
+        "name": "",
+        "ra_deg": 144.30276,
+        "dec_deg": -53.66851,
+        "mag": 5.44,
+        "offset_arcmin": 31.49
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 47694,
+        "name": "",
+        "ra_deg": 145.86496,
+        "dec_deg": -51.22814,
+        "mag": 6.15,
+        "offset_arcmin": 11.52
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 46914,
+        "name": "",
+        "ra_deg": 143.43561,
+        "dec_deg": -49.00507,
+        "mag": 5.12,
+        "offset_arcmin": 16.75
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 44979,
+        "name": "",
+        "ra_deg": 137.43749,
+        "dec_deg": -49.42438,
+        "mag": 6.48,
+        "offset_arcmin": 44.38
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 45002,
+        "name": "",
+        "ra_deg": 137.48791,
+        "dec_deg": -52.08286,
+        "mag": 6.19,
+        "offset_arcmin": 32.24
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 43195,
+        "name": "",
+        "ra_deg": 132.00096,
+        "dec_deg": -52.85015,
+        "mag": 6.29,
+        "offset_arcmin": 22.02
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 42088,
+        "name": "",
+        "ra_deg": 128.68167,
+        "dec_deg": -49.9442,
+        "mag": 5.01,
+        "offset_arcmin": 28.54
+      },
+      {
+        "atom": "C21",
+        "starless": true
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 44511,
+        "name": "",
+        "ra_deg": 136.03872,
+        "dec_deg": -47.09774,
+        "mag": 3.75,
+        "offset_arcmin": 8.1
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 45085,
+        "name": "",
+        "ra_deg": 137.76834,
+        "dec_deg": -44.8679,
+        "mag": 4.99,
+        "offset_arcmin": 23.06
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 44299,
+        "name": "",
+        "ra_deg": 135.33693,
+        "dec_deg": -41.86425,
+        "mag": 5.56,
+        "offset_arcmin": 16.38
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 42884,
+        "name": "",
+        "ra_deg": 131.09981,
+        "dec_deg": -42.64928,
+        "mag": 4.05,
+        "offset_arcmin": 22.48
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 42564,
+        "name": "",
+        "ra_deg": 130.14692,
+        "dec_deg": -45.1911,
+        "mag": 5.67,
+        "offset_arcmin": 38.38
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 42123,
+        "name": "",
+        "ra_deg": 128.80218,
+        "dec_deg": -39.97045,
+        "mag": 6.44,
+        "offset_arcmin": 24.36
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 49137,
+        "name": "",
+        "ra_deg": 150.41966,
+        "dec_deg": -53.36411,
+        "mag": 6.2,
+        "offset_arcmin": 33.4
+      }
+    ],
+    "rank": 3,
+    "chart": "examples/estradiol-enanthate/estradiol-enanthate_3.png",
+    "tattoo": [
+      "examples/estradiol-enanthate/estradiol-enanthate_3_tattoo.svg",
+      "examples/estradiol-enanthate/estradiol-enanthate_3_tattoo.png"
+    ]
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 163.79237,
+    "dec_deg": -60.09619,
+    "ra": "10h 55m 10.2s",
+    "dec": "-60° 05′ 46″",
+    "ra_hms": "10h 55m 10s",
+    "constellation": "Carina",
+    "constellations": [
+      "Vela",
+      "Carina",
+      "Centaurus",
+      "Musca",
+      "Crux"
+    ],
+    "distortion": 0.1432,
+    "rmsd_arcmin": 24.16,
+    "bond_deg": 2.812,
+    "mirrored": true,
+    "starless_atoms": [
+      "C16"
+    ],
+    "brightest_mag": 2.79,
+    "faintest_mag": 6.45,
+    "brighter_intruders": 49,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 44093,
+        "name": "",
+        "ra_deg": 134.71824,
+        "dec_deg": -47.23469,
+        "mag": 5.17,
+        "offset_arcmin": 14.79
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 45270,
+        "name": "",
+        "ra_deg": 138.39359,
+        "dec_deg": -47.33841,
+        "mag": 5.92,
+        "offset_arcmin": 36.21
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 45631,
+        "name": "",
+        "ra_deg": 139.5245,
+        "dec_deg": -51.05086,
+        "mag": 5.26,
+        "offset_arcmin": 29.09
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 46950,
+        "name": "",
+        "ra_deg": 143.53665,
+        "dec_deg": -51.25527,
+        "mag": 5.01,
+        "offset_arcmin": 5.81
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 47204,
+        "name": "",
+        "ra_deg": 144.30276,
+        "dec_deg": -53.66851,
+        "mag": 5.44,
+        "offset_arcmin": 27.12
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 48774,
+        "name": "",
+        "ra_deg": 149.21562,
+        "dec_deg": -54.56779,
+        "mag": 3.52,
+        "offset_arcmin": 9.54
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 49160,
+        "name": "",
+        "ra_deg": 150.49196,
+        "dec_deg": -57.34979,
+        "mag": 6.2,
+        "offset_arcmin": 29.83
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 48339,
+        "name": "",
+        "ra_deg": 147.80021,
+        "dec_deg": -59.42577,
+        "mag": 5.79,
+        "offset_arcmin": 8.49
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 51192,
+        "name": "",
+        "ra_deg": 156.85197,
+        "dec_deg": -57.6388,
+        "mag": 4.65,
+        "offset_arcmin": 18.24
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 51912,
+        "name": "",
+        "ra_deg": 159.08559,
+        "dec_deg": -59.56439,
+        "mag": 5.08,
+        "offset_arcmin": 19.84
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 51265,
+        "name": "",
+        "ra_deg": 157.07613,
+        "dec_deg": -63.16457,
+        "mag": 6.42,
+        "offset_arcmin": 48.64
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 52487,
+        "name": "",
+        "ra_deg": 160.96335,
+        "dec_deg": -64.24904,
+        "mag": 5.74,
+        "offset_arcmin": 5.8
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 54301,
+        "name": "",
+        "ra_deg": 166.63522,
+        "dec_deg": -62.42411,
+        "mag": 4.62,
+        "offset_arcmin": 25.73
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 53589,
+        "name": "",
+        "ra_deg": 164.45079,
+        "dec_deg": -59.73219,
+        "mag": 6.36,
+        "offset_arcmin": 23.99
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 54708,
+        "name": "",
+        "ra_deg": 168.01487,
+        "dec_deg": -58.42336,
+        "mag": 6.24,
+        "offset_arcmin": 24.05
+      },
+      {
+        "atom": "C16",
+        "starless": true
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 57439,
+        "name": "",
+        "ra_deg": 176.62848,
+        "dec_deg": -61.1784,
+        "mag": 4.11,
+        "offset_arcmin": 22.43
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 56050,
+        "name": "",
+        "ra_deg": 172.31309,
+        "dec_deg": -63.55394,
+        "mag": 6.45,
+        "offset_arcmin": 14.58
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 56862,
+        "name": "",
+        "ra_deg": 174.8734,
+        "dec_deg": -65.39777,
+        "mag": 5.01,
+        "offset_arcmin": 29.23
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 59050,
+        "name": "",
+        "ra_deg": 181.59606,
+        "dec_deg": -65.70945,
+        "mag": 5.95,
+        "offset_arcmin": 17.25
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 60009,
+        "name": "",
+        "ra_deg": 184.60947,
+        "dec_deg": -64.00307,
+        "mag": 4.06,
+        "offset_arcmin": 31.5
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 58921,
+        "name": "",
+        "ra_deg": 181.23846,
+        "dec_deg": -60.96825,
+        "mag": 5.95,
+        "offset_arcmin": 16.77
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 59747,
+        "name": "Imai",
+        "ra_deg": 183.78641,
+        "dec_deg": -58.74893,
+        "mag": 2.79,
+        "offset_arcmin": 17.95
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 62084,
+        "name": "",
+        "ra_deg": 190.86816,
+        "dec_deg": -58.90274,
+        "mag": 6.41,
+        "offset_arcmin": 48.01
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 62931,
+        "name": "",
+        "ra_deg": 193.45385,
+        "dec_deg": -60.37624,
+        "mag": 5.89,
+        "offset_arcmin": 16.91
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 62027,
+        "name": "",
+        "ra_deg": 190.70947,
+        "dec_deg": -63.05862,
+        "mag": 5.27,
+        "offset_arcmin": 12.47
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 64478,
+        "name": "",
+        "ra_deg": 198.23212,
+        "dec_deg": -59.81661,
+        "mag": 6.18,
+        "offset_arcmin": 12.6
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 53100,
+        "name": "",
+        "ra_deg": 162.94542,
+        "dec_deg": -57.27231,
+        "mag": 6.29,
+        "offset_arcmin": 16.07
+      }
+    ],
+    "rank": 4
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 150.32165,
+    "dec_deg": -58.22692,
+    "ra": "10h 01m 17.2s",
+    "dec": "-58° 13′ 37″",
+    "ra_hms": "10h 01m 17s",
+    "constellation": "Carina",
+    "constellations": [
+      "Crux",
+      "Centaurus",
+      "Carina",
+      "Vela"
+    ],
+    "distortion": 0.1446,
+    "rmsd_arcmin": 25.41,
+    "bond_deg": 2.928,
+    "mirrored": false,
+    "starless_atoms": [
+      "C23"
+    ],
+    "brightest_mag": 1.93,
+    "faintest_mag": 6.5,
+    "brighter_intruders": 77,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 62327,
+        "name": "",
+        "ra_deg": 191.59472,
+        "dec_deg": -56.48882,
+        "mag": 4.62,
+        "offset_arcmin": 10.85
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 60870,
+        "name": "",
+        "ra_deg": 187.14043,
+        "dec_deg": -56.40782,
+        "mag": 6.15,
+        "offset_arcmin": 18.53
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 59747,
+        "name": "Imai",
+        "ra_deg": 183.78641,
+        "dec_deg": -58.74893,
+        "mag": 2.79,
+        "offset_arcmin": 30.55
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 58041,
+        "name": "",
+        "ra_deg": 178.54794,
+        "dec_deg": -57.4102,
+        "mag": 6.05,
+        "offset_arcmin": 22.22
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 56250,
+        "name": "",
+        "ra_deg": 172.95334,
+        "dec_deg": -59.51565,
+        "mag": 5.12,
+        "offset_arcmin": 25.0
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 54708,
+        "name": "",
+        "ra_deg": 168.01487,
+        "dec_deg": -58.42336,
+        "mag": 6.24,
+        "offset_arcmin": 19.64
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 53589,
+        "name": "",
+        "ra_deg": 164.45079,
+        "dec_deg": -59.73219,
+        "mag": 6.36,
+        "offset_arcmin": 21.4
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 53334,
+        "name": "",
+        "ra_deg": 163.62333,
+        "dec_deg": -61.82662,
+        "mag": 5.95,
+        "offset_arcmin": 58.82
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 51676,
+        "name": "",
+        "ra_deg": 158.35581,
+        "dec_deg": -58.19015,
+        "mag": 6.09,
+        "offset_arcmin": 21.5
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 50287,
+        "name": "",
+        "ra_deg": 154.01347,
+        "dec_deg": -59.90341,
+        "mag": 6.22,
+        "offset_arcmin": 23.55
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 49642,
+        "name": "",
+        "ra_deg": 151.98597,
+        "dec_deg": -62.22142,
+        "mag": 6.45,
+        "offset_arcmin": 10.56
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 47854,
+        "name": "",
+        "ra_deg": 146.31176,
+        "dec_deg": -62.5079,
+        "mag": 3.69,
+        "offset_arcmin": 14.73
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 46974,
+        "name": "",
+        "ra_deg": 143.61106,
+        "dec_deg": -59.22975,
+        "mag": 4.08,
+        "offset_arcmin": 30.3
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 49160,
+        "name": "",
+        "ra_deg": 150.49196,
+        "dec_deg": -57.34979,
+        "mag": 6.2,
+        "offset_arcmin": 53.98
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 48469,
+        "name": "",
+        "ra_deg": 148.2504,
+        "dec_deg": -55.37321,
+        "mag": 6.5,
+        "offset_arcmin": 27.72
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 47204,
+        "name": "",
+        "ra_deg": 144.30276,
+        "dec_deg": -53.66851,
+        "mag": 5.44,
+        "offset_arcmin": 5.91
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 45742,
+        "name": "",
+        "ra_deg": 139.88533,
+        "dec_deg": -55.18647,
+        "mag": 6.28,
+        "offset_arcmin": 5.94
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 45418,
+        "name": "",
+        "ra_deg": 138.82353,
+        "dec_deg": -58.38838,
+        "mag": 6.02,
+        "offset_arcmin": 32.44
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 43937,
+        "name": "",
+        "ra_deg": 134.24343,
+        "dec_deg": -59.22934,
+        "mag": 4.93,
+        "offset_arcmin": 8.72
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 42579,
+        "name": "",
+        "ra_deg": 130.18141,
+        "dec_deg": -57.54549,
+        "mag": 6.34,
+        "offset_arcmin": 5.09
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 42913,
+        "name": "Alsephina",
+        "ra_deg": 131.17588,
+        "dec_deg": -54.70882,
+        "mag": 1.93,
+        "offset_arcmin": 7.52
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 44423,
+        "name": "",
+        "ra_deg": 135.77224,
+        "dec_deg": -53.55037,
+        "mag": 6.39,
+        "offset_arcmin": 6.3
+      },
+      {
+        "atom": "C23",
+        "starless": true
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 43589,
+        "name": "",
+        "ra_deg": 133.16087,
+        "dec_deg": -48.3591,
+        "mag": 5.92,
+        "offset_arcmin": 42.56
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 42088,
+        "name": "",
+        "ra_deg": 128.68167,
+        "dec_deg": -49.9442,
+        "mag": 5.01,
+        "offset_arcmin": 14.99
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 41426,
+        "name": "",
+        "ra_deg": 126.74074,
+        "dec_deg": -52.70495,
+        "mag": 6.49,
+        "offset_arcmin": 23.33
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 40749,
+        "name": "",
+        "ra_deg": 124.77328,
+        "dec_deg": -48.19785,
+        "mag": 6.45,
+        "offset_arcmin": 19.79
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 50069,
+        "name": "",
+        "ra_deg": 153.34292,
+        "dec_deg": -56.5867,
+        "mag": 6.48,
+        "offset_arcmin": 19.43
+      }
+    ],
+    "rank": 5
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 148.21103,
+    "dec_deg": -60.30382,
+    "ra": "09h 52m 50.6s",
+    "dec": "-60° 18′ 14″",
+    "ra_hms": "09h 52m 51s",
+    "constellation": "Carina",
+    "constellations": [
+      "Musca",
+      "Carina",
+      "Vela"
+    ],
+    "distortion": 0.147,
+    "rmsd_arcmin": 25.87,
+    "bond_deg": 2.934,
+    "mirrored": false,
+    "starless_atoms": [
+      "C23"
+    ],
+    "brightest_mag": 1.93,
+    "faintest_mag": 6.5,
+    "brighter_intruders": 53,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 64117,
+        "name": "",
+        "ra_deg": 197.11597,
+        "dec_deg": -67.79676,
+        "mag": 6.34,
+        "offset_arcmin": 10.96
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 61796,
+        "name": "",
+        "ra_deg": 189.98284,
+        "dec_deg": -66.51114,
+        "mag": 6.26,
+        "offset_arcmin": 25.17
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 59929,
+        "name": "",
+        "ra_deg": 184.39375,
+        "dec_deg": -67.96074,
+        "mag": 4.06,
+        "offset_arcmin": 2.82
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 58085,
+        "name": "",
+        "ra_deg": 178.68594,
+        "dec_deg": -66.3762,
+        "mag": 6.38,
+        "offset_arcmin": 14.28
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 56287,
+        "name": "",
+        "ra_deg": 173.08332,
+        "dec_deg": -66.96182,
+        "mag": 5.89,
+        "offset_arcmin": 34.36
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 54289,
+        "name": "",
+        "ra_deg": 166.6012,
+        "dec_deg": -64.83997,
+        "mag": 6.39,
+        "offset_arcmin": 11.66
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 52221,
+        "name": "",
+        "ra_deg": 160.04772,
+        "dec_deg": -65.10021,
+        "mag": 5.51,
+        "offset_arcmin": 5.07
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 51425,
+        "name": "",
+        "ra_deg": 157.53668,
+        "dec_deg": -66.98465,
+        "mag": 6.19,
+        "offset_arcmin": 41.89
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 51265,
+        "name": "",
+        "ra_deg": 157.07613,
+        "dec_deg": -63.16457,
+        "mag": 6.42,
+        "offset_arcmin": 39.98
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 49223,
+        "name": "",
+        "ra_deg": 150.7059,
+        "dec_deg": -62.15667,
+        "mag": 6.41,
+        "offset_arcmin": 13.84
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 48002,
+        "name": "",
+        "ra_deg": 146.77554,
+        "dec_deg": -65.07201,
+        "mag": 2.92,
+        "offset_arcmin": 44.33
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 45856,
+        "name": "",
+        "ra_deg": 140.23675,
+        "dec_deg": -62.40463,
+        "mag": 4.79,
+        "offset_arcmin": 32.91
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 46049,
+        "name": "",
+        "ra_deg": 140.86386,
+        "dec_deg": -60.30231,
+        "mag": 6.3,
+        "offset_arcmin": 27.46
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 48339,
+        "name": "",
+        "ra_deg": 147.80021,
+        "dec_deg": -59.42577,
+        "mag": 5.79,
+        "offset_arcmin": 22.18
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 49052,
+        "name": "",
+        "ra_deg": 150.14396,
+        "dec_deg": -56.94611,
+        "mag": 6.5,
+        "offset_arcmin": 23.93
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 47559,
+        "name": "",
+        "ra_deg": 145.44972,
+        "dec_deg": -55.21376,
+        "mag": 5.99,
+        "offset_arcmin": 35.89
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 45941,
+        "name": "Markeb",
+        "ra_deg": 140.52843,
+        "dec_deg": -55.01067,
+        "mag": 2.47,
+        "offset_arcmin": 17.66
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 45437,
+        "name": "",
+        "ra_deg": 138.89468,
+        "dec_deg": -57.57774,
+        "mag": 6.32,
+        "offset_arcmin": 10.01
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 43499,
+        "name": "",
+        "ra_deg": 132.90217,
+        "dec_deg": -57.63358,
+        "mag": 5.59,
+        "offset_arcmin": 8.21
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 42913,
+        "name": "Alsephina",
+        "ra_deg": 131.17588,
+        "dec_deg": -54.70882,
+        "mag": 1.93,
+        "offset_arcmin": 21.1
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 43878,
+        "name": "",
+        "ra_deg": 134.08029,
+        "dec_deg": -52.72348,
+        "mag": 4.68,
+        "offset_arcmin": 20.75
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 45002,
+        "name": "",
+        "ra_deg": 137.48791,
+        "dec_deg": -52.08286,
+        "mag": 6.19,
+        "offset_arcmin": 44.73
+      },
+      {
+        "atom": "C23",
+        "starless": true
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 45270,
+        "name": "",
+        "ra_deg": 138.39359,
+        "dec_deg": -47.33841,
+        "mag": 5.92,
+        "offset_arcmin": 17.72
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 43671,
+        "name": "",
+        "ra_deg": 133.46082,
+        "dec_deg": -47.52078,
+        "mag": 5.31,
+        "offset_arcmin": 16.38
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 42834,
+        "name": "",
+        "ra_deg": 130.91781,
+        "dec_deg": -49.8228,
+        "mag": 5.15,
+        "offset_arcmin": 24.2
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 43347,
+        "name": "",
+        "ra_deg": 132.4485,
+        "dec_deg": -45.30788,
+        "mag": 4.94,
+        "offset_arcmin": 28.56
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 50044,
+        "name": "",
+        "ra_deg": 153.25482,
+        "dec_deg": -59.91809,
+        "mag": 6.07,
+        "offset_arcmin": 26.9
+      }
+    ],
+    "rank": 6
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 139.95956,
+    "dec_deg": -54.84485,
+    "ra": "09h 19m 50.3s",
+    "dec": "-54° 50′ 41″",
+    "ra_hms": "09h 19m 50s",
+    "constellation": "Vela",
+    "constellations": [
+      "Puppis",
+      "Vela",
+      "Carina",
+      "Centaurus"
+    ],
+    "distortion": 0.1496,
+    "rmsd_arcmin": 26.92,
+    "bond_deg": 3.0,
+    "mirrored": true,
+    "starless_atoms": [
+      "O9"
+    ],
+    "brightest_mag": 2.47,
+    "faintest_mag": 6.5,
+    "brighter_intruders": 79,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 37666,
+        "name": "",
+        "ra_deg": 115.92884,
+        "dec_deg": -38.20188,
+        "mag": 6.42,
+        "offset_arcmin": 9.52
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 39061,
+        "name": "",
+        "ra_deg": 119.86825,
+        "dec_deg": -39.29694,
+        "mag": 5.22,
+        "offset_arcmin": 20.51
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 38845,
+        "name": "",
+        "ra_deg": 119.24094,
+        "dec_deg": -42.40648,
+        "mag": 6.09,
+        "offset_arcmin": 28.33
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 40160,
+        "name": "",
+        "ra_deg": 123.02524,
+        "dec_deg": -43.40044,
+        "mag": 6.48,
+        "offset_arcmin": 23.22
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 40397,
+        "name": "",
+        "ra_deg": 123.7135,
+        "dec_deg": -46.48589,
+        "mag": 6.45,
+        "offset_arcmin": 19.85
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 41905,
+        "name": "",
+        "ra_deg": 128.16877,
+        "dec_deg": -47.04211,
+        "mag": 6.49,
+        "offset_arcmin": 20.95
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 42088,
+        "name": "",
+        "ra_deg": 128.68167,
+        "dec_deg": -49.9442,
+        "mag": 5.01,
+        "offset_arcmin": 29.25
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 41081,
+        "name": "",
+        "ra_deg": 125.72986,
+        "dec_deg": -52.12373,
+        "mag": 5.89,
+        "offset_arcmin": 9.3
+      },
+      {
+        "atom": "O9",
+        "starless": true
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 44423,
+        "name": "",
+        "ra_deg": 135.77224,
+        "dec_deg": -53.55037,
+        "mag": 6.39,
+        "offset_arcmin": 34.53
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 43105,
+        "name": "",
+        "ra_deg": 131.6773,
+        "dec_deg": -56.76978,
+        "mag": 4.5,
+        "offset_arcmin": 26.83
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 44143,
+        "name": "",
+        "ra_deg": 134.85117,
+        "dec_deg": -59.08371,
+        "mag": 5.17,
+        "offset_arcmin": 15.3
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 45496,
+        "name": "",
+        "ra_deg": 139.05036,
+        "dec_deg": -57.54147,
+        "mag": 4.34,
+        "offset_arcmin": 46.44
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 45941,
+        "name": "Markeb",
+        "ra_deg": 140.52843,
+        "dec_deg": -55.01067,
+        "mag": 2.47,
+        "offset_arcmin": 18.05
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 47172,
+        "name": "",
+        "ra_deg": 144.19308,
+        "dec_deg": -52.94367,
+        "mag": 6.18,
+        "offset_arcmin": 12.9
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 48774,
+        "name": "",
+        "ra_deg": 149.21562,
+        "dec_deg": -54.56779,
+        "mag": 3.52,
+        "offset_arcmin": 20.4
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 49052,
+        "name": "",
+        "ra_deg": 150.14396,
+        "dec_deg": -56.94611,
+        "mag": 6.5,
+        "offset_arcmin": 16.37
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 47913,
+        "name": "",
+        "ra_deg": 146.48235,
+        "dec_deg": -58.79383,
+        "mag": 6.22,
+        "offset_arcmin": 33.45
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 47854,
+        "name": "",
+        "ra_deg": 146.31176,
+        "dec_deg": -62.5079,
+        "mag": 3.69,
+        "offset_arcmin": 27.01
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 49642,
+        "name": "",
+        "ra_deg": 151.98597,
+        "dec_deg": -62.22142,
+        "mag": 6.45,
+        "offset_arcmin": 51.38
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 51461,
+        "name": "",
+        "ra_deg": 157.66352,
+        "dec_deg": -61.35647,
+        "mag": 6.41,
+        "offset_arcmin": 33.82
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 50785,
+        "name": "",
+        "ra_deg": 155.54353,
+        "dec_deg": -58.26557,
+        "mag": 6.34,
+        "offset_arcmin": 14.99
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 52154,
+        "name": "",
+        "ra_deg": 159.82668,
+        "dec_deg": -55.60327,
+        "mag": 4.29,
+        "offset_arcmin": 31.56
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 53260,
+        "name": "",
+        "ra_deg": 163.38922,
+        "dec_deg": -56.4205,
+        "mag": 6.45,
+        "offset_arcmin": 30.32
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 54463,
+        "name": "",
+        "ra_deg": 167.14747,
+        "dec_deg": -58.97504,
+        "mag": 3.93,
+        "offset_arcmin": 19.32
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 53334,
+        "name": "",
+        "ra_deg": 163.62333,
+        "dec_deg": -61.82662,
+        "mag": 5.95,
+        "offset_arcmin": 30.09
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 56243,
+        "name": "",
+        "ra_deg": 172.94196,
+        "dec_deg": -59.44206,
+        "mag": 5.07,
+        "offset_arcmin": 28.5
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 45675,
+        "name": "",
+        "ra_deg": 139.67649,
+        "dec_deg": -51.56065,
+        "mag": 5.83,
+        "offset_arcmin": 24.5
+      }
+    ],
+    "rank": 7
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 144.24561,
+    "dec_deg": -53.91043,
+    "ra": "09h 36m 58.9s",
+    "dec": "-53° 54′ 38″",
+    "ra_hms": "09h 36m 59s",
+    "constellation": "Vela",
+    "constellations": [
+      "Crux",
+      "Centaurus",
+      "Carina",
+      "Vela"
+    ],
+    "distortion": 0.1499,
+    "rmsd_arcmin": 26.75,
+    "bond_deg": 2.974,
+    "mirrored": false,
+    "starless_atoms": [],
+    "brightest_mag": 0.77,
+    "faintest_mag": 6.48,
+    "brighter_intruders": 57,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 60718,
+        "name": "Acrux",
+        "ra_deg": 186.64966,
+        "dec_deg": -63.09909,
+        "mag": 0.77,
+        "offset_arcmin": 22.16
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 58921,
+        "name": "",
+        "ra_deg": 181.23846,
+        "dec_deg": -60.96825,
+        "mag": 5.95,
+        "offset_arcmin": 16.73
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 57175,
+        "name": "",
+        "ra_deg": 175.87998,
+        "dec_deg": -62.4894,
+        "mag": 5.0,
+        "offset_arcmin": 8.63
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 55831,
+        "name": "",
+        "ra_deg": 171.64761,
+        "dec_deg": -61.11517,
+        "mag": 5.22,
+        "offset_arcmin": 42.94
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 53701,
+        "name": "",
+        "ra_deg": 164.80845,
+        "dec_deg": -61.32074,
+        "mag": 6.16,
+        "offset_arcmin": 16.45
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 52405,
+        "name": "",
+        "ra_deg": 160.66904,
+        "dec_deg": -59.21576,
+        "mag": 5.36,
+        "offset_arcmin": 30.84
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 50993,
+        "name": "",
+        "ra_deg": 156.24774,
+        "dec_deg": -58.5763,
+        "mag": 5.93,
+        "offset_arcmin": 42.93
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 50067,
+        "name": "",
+        "ra_deg": 153.33829,
+        "dec_deg": -61.65883,
+        "mag": 6.42,
+        "offset_arcmin": 15.94
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 50069,
+        "name": "",
+        "ra_deg": 153.34292,
+        "dec_deg": -56.5867,
+        "mag": 6.48,
+        "offset_arcmin": 20.54
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 48119,
+        "name": "",
+        "ra_deg": 147.16677,
+        "dec_deg": -56.41189,
+        "mag": 6.05,
+        "offset_arcmin": 17.49
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 46974,
+        "name": "",
+        "ra_deg": 143.61106,
+        "dec_deg": -59.22975,
+        "mag": 4.08,
+        "offset_arcmin": 18.82
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 45437,
+        "name": "",
+        "ra_deg": 138.89468,
+        "dec_deg": -57.57774,
+        "mag": 6.32,
+        "offset_arcmin": 7.16
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 45603,
+        "name": "",
+        "ra_deg": 139.42623,
+        "dec_deg": -54.49483,
+        "mag": 6.33,
+        "offset_arcmin": 12.53
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 47204,
+        "name": "",
+        "ra_deg": 144.30276,
+        "dec_deg": -53.66851,
+        "mag": 5.44,
+        "offset_arcmin": 30.86
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 47694,
+        "name": "",
+        "ra_deg": 145.86496,
+        "dec_deg": -51.22814,
+        "mag": 6.15,
+        "offset_arcmin": 9.54
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 46914,
+        "name": "",
+        "ra_deg": 143.43561,
+        "dec_deg": -49.00507,
+        "mag": 5.12,
+        "offset_arcmin": 19.03
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 44979,
+        "name": "",
+        "ra_deg": 137.43749,
+        "dec_deg": -49.42438,
+        "mag": 6.48,
+        "offset_arcmin": 41.57
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 45002,
+        "name": "",
+        "ra_deg": 137.48791,
+        "dec_deg": -52.08286,
+        "mag": 6.19,
+        "offset_arcmin": 34.81
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 43195,
+        "name": "",
+        "ra_deg": 132.00096,
+        "dec_deg": -52.85015,
+        "mag": 6.29,
+        "offset_arcmin": 22.69
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 42088,
+        "name": "",
+        "ra_deg": 128.68167,
+        "dec_deg": -49.9442,
+        "mag": 5.01,
+        "offset_arcmin": 25.03
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 42624,
+        "name": "",
+        "ra_deg": 130.30473,
+        "dec_deg": -47.31712,
+        "mag": 4.74,
+        "offset_arcmin": 48.39
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 44511,
+        "name": "",
+        "ra_deg": 136.03872,
+        "dec_deg": -47.09774,
+        "mag": 3.75,
+        "offset_arcmin": 10.36
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 45085,
+        "name": "",
+        "ra_deg": 137.76834,
+        "dec_deg": -44.8679,
+        "mag": 4.99,
+        "offset_arcmin": 24.96
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 44299,
+        "name": "",
+        "ra_deg": 135.33693,
+        "dec_deg": -41.86425,
+        "mag": 5.56,
+        "offset_arcmin": 16.85
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 42884,
+        "name": "",
+        "ra_deg": 131.09981,
+        "dec_deg": -42.64928,
+        "mag": 4.05,
+        "offset_arcmin": 21.98
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 42564,
+        "name": "",
+        "ra_deg": 130.14692,
+        "dec_deg": -45.1911,
+        "mag": 5.67,
+        "offset_arcmin": 42.2
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 42123,
+        "name": "",
+        "ra_deg": 128.80218,
+        "dec_deg": -39.97045,
+        "mag": 6.44,
+        "offset_arcmin": 20.64
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 49137,
+        "name": "",
+        "ra_deg": 150.41966,
+        "dec_deg": -53.36411,
+        "mag": 6.2,
+        "offset_arcmin": 34.62
+      }
+    ],
+    "rank": 8
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 124.02388,
+    "dec_deg": -45.78723,
+    "ra": "08h 16m 05.7s",
+    "dec": "-45° 47′ 14″",
+    "ra_hms": "08h 16m 06s",
+    "constellation": "Vela",
+    "constellations": [
+      "Canis Major",
+      "Puppis",
+      "Vela",
+      "Carina"
+    ],
+    "distortion": 0.15,
+    "rmsd_arcmin": 26.12,
+    "bond_deg": 2.903,
+    "mirrored": false,
+    "starless_atoms": [],
+    "brightest_mag": 4.08,
+    "faintest_mag": 6.48,
+    "brighter_intruders": 63,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 34624,
+        "name": "",
+        "ra_deg": 107.58051,
+        "dec_deg": -27.49152,
+        "mag": 5.46,
+        "offset_arcmin": 6.79
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 34954,
+        "name": "",
+        "ra_deg": 108.48891,
+        "dec_deg": -30.33979,
+        "mag": 6.32,
+        "offset_arcmin": 29.89
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 35957,
+        "name": "",
+        "ra_deg": 111.18273,
+        "dec_deg": -31.8089,
+        "mag": 5.35,
+        "offset_arcmin": 24.28
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 36143,
+        "name": "",
+        "ra_deg": 111.67695,
+        "dec_deg": -34.14069,
+        "mag": 5.9,
+        "offset_arcmin": 23.82
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 37096,
+        "name": "",
+        "ra_deg": 114.34213,
+        "dec_deg": -34.96853,
+        "mag": 4.53,
+        "offset_arcmin": 29.49
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 37329,
+        "name": "",
+        "ra_deg": 114.94949,
+        "dec_deg": -38.26065,
+        "mag": 5.76,
+        "offset_arcmin": 1.88
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 38455,
+        "name": "",
+        "ra_deg": 118.16103,
+        "dec_deg": -38.86281,
+        "mag": 4.49,
+        "offset_arcmin": 30.05
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 39251,
+        "name": "",
+        "ra_deg": 120.40637,
+        "dec_deg": -37.28372,
+        "mag": 5.9,
+        "offset_arcmin": 38.23
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 38845,
+        "name": "",
+        "ra_deg": 119.24094,
+        "dec_deg": -42.40648,
+        "mag": 6.09,
+        "offset_arcmin": 15.57
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 40096,
+        "name": "",
+        "ra_deg": 122.85789,
+        "dec_deg": -42.98728,
+        "mag": 4.73,
+        "offset_arcmin": 4.68
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 41323,
+        "name": "",
+        "ra_deg": 126.4663,
+        "dec_deg": -42.15307,
+        "mag": 5.45,
+        "offset_arcmin": 58.49
+      },
+      {
+        "atom": "C12",
+        "starless": false,
+        "hip": 42312,
+        "name": "",
+        "ra_deg": 129.41099,
+        "dec_deg": -42.98908,
+        "mag": 4.11,
+        "offset_arcmin": 14.37
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 41941,
+        "name": "",
+        "ra_deg": 128.25775,
+        "dec_deg": -45.75291,
+        "mag": 6.36,
+        "offset_arcmin": 9.83
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 40357,
+        "name": "",
+        "ra_deg": 123.59947,
+        "dec_deg": -45.83452,
+        "mag": 5.86,
+        "offset_arcmin": 26.3
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 39919,
+        "name": "",
+        "ra_deg": 122.28961,
+        "dec_deg": -48.68441,
+        "mag": 5.66,
+        "offset_arcmin": 20.58
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 40433,
+        "name": "",
+        "ra_deg": 123.84691,
+        "dec_deg": -50.44922,
+        "mag": 6.44,
+        "offset_arcmin": 34.3
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 42177,
+        "name": "",
+        "ra_deg": 128.9668,
+        "dec_deg": -50.96965,
+        "mag": 5.79,
+        "offset_arcmin": 22.26
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 42712,
+        "name": "",
+        "ra_deg": 130.56747,
+        "dec_deg": -48.09909,
+        "mag": 5.48,
+        "offset_arcmin": 14.98
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 44093,
+        "name": "",
+        "ra_deg": 134.71824,
+        "dec_deg": -47.23469,
+        "mag": 5.17,
+        "offset_arcmin": 23.88
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 44979,
+        "name": "",
+        "ra_deg": 137.43749,
+        "dec_deg": -49.42438,
+        "mag": 6.48,
+        "offset_arcmin": 27.34
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 45002,
+        "name": "",
+        "ra_deg": 137.48791,
+        "dec_deg": -52.08286,
+        "mag": 6.19,
+        "offset_arcmin": 39.27
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 43195,
+        "name": "",
+        "ra_deg": 132.00096,
+        "dec_deg": -52.85015,
+        "mag": 6.29,
+        "offset_arcmin": 5.47
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 42717,
+        "name": "",
+        "ra_deg": 130.58689,
+        "dec_deg": -55.77456,
+        "mag": 6.26,
+        "offset_arcmin": 22.98
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 43499,
+        "name": "",
+        "ra_deg": 132.90217,
+        "dec_deg": -57.63358,
+        "mag": 5.59,
+        "offset_arcmin": 16.65
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 45437,
+        "name": "",
+        "ra_deg": 138.89468,
+        "dec_deg": -57.57774,
+        "mag": 6.32,
+        "offset_arcmin": 23.21
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 45603,
+        "name": "",
+        "ra_deg": 139.42623,
+        "dec_deg": -54.49483,
+        "mag": 6.33,
+        "offset_arcmin": 16.03
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 46974,
+        "name": "",
+        "ra_deg": 143.61106,
+        "dec_deg": -59.22975,
+        "mag": 4.08,
+        "offset_arcmin": 41.5
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 39014,
+        "name": "",
+        "ra_deg": 119.75753,
+        "dec_deg": -45.21584,
+        "mag": 5.98,
+        "offset_arcmin": 23.55
+      }
+    ],
+    "rank": 9
+  },
+  {
+    "molecule": "Estradiol enanthate",
+    "smiles": "CCCCCCC(=O)O[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=C3C=CC(=C4)O)C",
+    "ra_deg": 119.52417,
+    "dec_deg": -38.77875,
+    "ra": "07h 58m 05.8s",
+    "dec": "-38° 46′ 43″",
+    "ra_hms": "07h 58m 06s",
+    "constellation": "Puppis",
+    "constellations": [
+      "Canis Major",
+      "Puppis",
+      "Vela"
+    ],
+    "distortion": 0.1501,
+    "rmsd_arcmin": 26.0,
+    "bond_deg": 2.887,
+    "mirrored": true,
+    "starless_atoms": [
+      "C12"
+    ],
+    "brightest_mag": 3.89,
+    "faintest_mag": 6.49,
+    "brighter_intruders": 39,
+    "stars": [
+      {
+        "atom": "C1",
+        "starless": false,
+        "hip": 32368,
+        "name": "",
+        "ra_deg": 101.34735,
+        "dec_deg": -23.46243,
+        "mag": 6.04,
+        "offset_arcmin": 28.68
+      },
+      {
+        "atom": "C2",
+        "starless": false,
+        "hip": 33152,
+        "name": "",
+        "ra_deg": 103.53314,
+        "dec_deg": -24.18421,
+        "mag": 3.89,
+        "offset_arcmin": 14.0
+      },
+      {
+        "atom": "C3",
+        "starless": false,
+        "hip": 33532,
+        "name": "",
+        "ra_deg": 104.53148,
+        "dec_deg": -27.16438,
+        "mag": 6.36,
+        "offset_arcmin": 17.65
+      },
+      {
+        "atom": "C4",
+        "starless": false,
+        "hip": 34624,
+        "name": "",
+        "ra_deg": 107.58051,
+        "dec_deg": -27.49152,
+        "mag": 5.46,
+        "offset_arcmin": 33.59
+      },
+      {
+        "atom": "C5",
+        "starless": false,
+        "hip": 34782,
+        "name": "",
+        "ra_deg": 108.01705,
+        "dec_deg": -30.82137,
+        "mag": 6.1,
+        "offset_arcmin": 8.19
+      },
+      {
+        "atom": "C6",
+        "starless": false,
+        "hip": 35957,
+        "name": "",
+        "ra_deg": 111.18273,
+        "dec_deg": -31.8089,
+        "mag": 5.35,
+        "offset_arcmin": 11.14
+      },
+      {
+        "atom": "C7",
+        "starless": false,
+        "hip": 36143,
+        "name": "",
+        "ra_deg": 111.67695,
+        "dec_deg": -34.14069,
+        "mag": 5.9,
+        "offset_arcmin": 20.47
+      },
+      {
+        "atom": "O8",
+        "starless": false,
+        "hip": 35226,
+        "name": "",
+        "ra_deg": 109.20588,
+        "dec_deg": -36.59263,
+        "mag": 5.03,
+        "offset_arcmin": 12.51
+      },
+      {
+        "atom": "O9",
+        "starless": false,
+        "hip": 37096,
+        "name": "",
+        "ra_deg": 114.34213,
+        "dec_deg": -34.96853,
+        "mag": 4.53,
+        "offset_arcmin": 44.56
+      },
+      {
+        "atom": "C10",
+        "starless": false,
+        "hip": 37752,
+        "name": "",
+        "ra_deg": 116.14245,
+        "dec_deg": -37.94292,
+        "mag": 5.89,
+        "offset_arcmin": 6.68
+      },
+      {
+        "atom": "C11",
+        "starless": false,
+        "hip": 36728,
+        "name": "",
+        "ra_deg": 113.30484,
+        "dec_deg": -40.05852,
+        "mag": 6.27,
+        "offset_arcmin": 24.09
+      },
+      {
+        "atom": "C12",
+        "starless": true
+      },
+      {
+        "atom": "C13",
+        "starless": false,
+        "hip": 38845,
+        "name": "",
+        "ra_deg": 119.24094,
+        "dec_deg": -42.40648,
+        "mag": 6.09,
+        "offset_arcmin": 33.06
+      },
+      {
+        "atom": "C14",
+        "starless": false,
+        "hip": 39061,
+        "name": "",
+        "ra_deg": 119.86825,
+        "dec_deg": -39.29694,
+        "mag": 5.22,
+        "offset_arcmin": 21.31
+      },
+      {
+        "atom": "C15",
+        "starless": false,
+        "hip": 40063,
+        "name": "",
+        "ra_deg": 122.75702,
+        "dec_deg": -37.29237,
+        "mag": 6.42,
+        "offset_arcmin": 15.77
+      },
+      {
+        "atom": "C16",
+        "starless": false,
+        "hip": 41361,
+        "name": "",
+        "ra_deg": 126.57389,
+        "dec_deg": -39.05896,
+        "mag": 6.07,
+        "offset_arcmin": 28.36
+      },
+      {
+        "atom": "C17",
+        "starless": false,
+        "hip": 41323,
+        "name": "",
+        "ra_deg": 126.4663,
+        "dec_deg": -42.15307,
+        "mag": 5.45,
+        "offset_arcmin": 25.39
+      },
+      {
+        "atom": "C18",
+        "starless": false,
+        "hip": 40160,
+        "name": "",
+        "ra_deg": 123.02524,
+        "dec_deg": -43.40044,
+        "mag": 6.48,
+        "offset_arcmin": 5.5
+      },
+      {
+        "atom": "C19",
+        "starless": false,
+        "hip": 40183,
+        "name": "",
+        "ra_deg": 123.12831,
+        "dec_deg": -46.26429,
+        "mag": 6.0,
+        "offset_arcmin": 4.32
+      },
+      {
+        "atom": "C20",
+        "starless": false,
+        "hip": 41616,
+        "name": "",
+        "ra_deg": 127.26981,
+        "dec_deg": -47.92892,
+        "mag": 5.33,
+        "offset_arcmin": 31.79
+      },
+      {
+        "atom": "C21",
+        "starless": false,
+        "hip": 42679,
+        "name": "",
+        "ra_deg": 130.48713,
+        "dec_deg": -45.41071,
+        "mag": 5.2,
+        "offset_arcmin": 27.51
+      },
+      {
+        "atom": "C22",
+        "starless": false,
+        "hip": 42312,
+        "name": "",
+        "ra_deg": 129.41099,
+        "dec_deg": -42.98908,
+        "mag": 4.11,
+        "offset_arcmin": 16.15
+      },
+      {
+        "atom": "C23",
+        "starless": false,
+        "hip": 43528,
+        "name": "",
+        "ra_deg": 132.98165,
+        "dec_deg": -40.98658,
+        "mag": 6.49,
+        "offset_arcmin": 16.81
+      },
+      {
+        "atom": "C24",
+        "starless": false,
+        "hip": 44299,
+        "name": "",
+        "ra_deg": 135.33693,
+        "dec_deg": -41.86425,
+        "mag": 5.56,
+        "offset_arcmin": 55.22
+      },
+      {
+        "atom": "C25",
+        "starless": false,
+        "hip": 45085,
+        "name": "",
+        "ra_deg": 137.76834,
+        "dec_deg": -44.8679,
+        "mag": 4.99,
+        "offset_arcmin": 27.67
+      },
+      {
+        "atom": "C26",
+        "starless": false,
+        "hip": 44093,
+        "name": "",
+        "ra_deg": 134.71824,
+        "dec_deg": -47.23469,
+        "mag": 5.17,
+        "offset_arcmin": 34.1
+      },
+      {
+        "atom": "O27",
+        "starless": false,
+        "hip": 45962,
+        "name": "",
+        "ra_deg": 140.59996,
+        "dec_deg": -46.04745,
+        "mag": 5.74,
+        "offset_arcmin": 20.9
+      },
+      {
+        "atom": "C28",
+        "starless": false,
+        "hip": 38593,
+        "name": "",
+        "ra_deg": 118.54587,
+        "dec_deg": -35.87729,
+        "mag": 5.48,
+        "offset_arcmin": 37.41
+      }
+    ],
+    "rank": 10
+  }
+]

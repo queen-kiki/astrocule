@@ -29,7 +29,7 @@ python astrocule.py "CN1C=NC2=C1C(=O)N(C(=O)N2C)C" --title Caffeine   # any SMIL
 python astrocule.py melatonin                       # anything else is looked up on PubChem
 ```
 
-Built-in names: estradiol, testosterone, progesterone, spironolactone, serotonin, dopamine, caffeine.
+Built-in names: estradiol, estradiol enanthate, testosterone, progesterone, spironolactone, serotonin, dopamine, caffeine.
 
 The first run downloads the [HYG database](https://github.com/astronexus/HYG-Database) (about 34 MB)
 to `~/.cache/astrocule`. A whole-sky search takes about 10 seconds on 4 cores (plus about 30 seconds of one-time numba
