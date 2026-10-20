@@ -171,17 +171,25 @@ class Catalog:
     mag: np.ndarray    # V magnitude
     name: np.ndarray   # proper name or ""
     con: np.ndarray    # constellation abbreviation or ""
+    ci: np.ndarray = None  # B-V color index (nan if unknown)
 
     def __post_init__(self):
         self.xyz = radec_to_xyz(self.ra, self.dec)
+        if self.ci is None:
+            self.ci = np.full(len(self.hip), np.nan)
+
+    @property
+    def temp(self):
+        return bv_to_temp(self.ci)
 
     def subset(self, mask):
-        return Catalog(self.hip[mask], self.ra[mask], self.dec[mask], self.mag[mask], self.name[mask], self.con[mask])
+        return Catalog(self.hip[mask], self.ra[mask], self.dec[mask], self.mag[mask], self.name[mask],
+                       self.con[mask], self.ci[mask])
 
 
 def load_catalog(mag_limit, csv_path=None):
     """All Hipparcos stars brighter than mag_limit. Downloads and caches HYG v4.1 on first use."""
-    npz = CACHE_DIR / "hyg_v41_hip.npz"
+    npz = CACHE_DIR / "hyg_v41_hip_v2.npz"
     if csv_path is None and npz.exists():
         d = np.load(npz)
     else:
@@ -191,7 +199,7 @@ def load_catalog(mag_limit, csv_path=None):
                 CACHE_DIR.mkdir(parents=True, exist_ok=True)
                 print(f"Downloading HYG star catalog to {csv_path} ...")
                 urllib.request.urlretrieve(HYG_URL, csv_path)
-        cols = {k: [] for k in ("hip", "ra", "dec", "mag", "name", "con")}
+        cols = {k: [] for k in ("hip", "ra", "dec", "mag", "name", "con", "ci")}
         with open(csv_path, newline="") as f:
             for row in csv.DictReader(f):
                 if not row["hip"] or not row["mag"]:
@@ -202,11 +210,33 @@ def load_catalog(mag_limit, csv_path=None):
                 cols["mag"].append(float(row["mag"]))
                 cols["name"].append(row["proper"])
                 cols["con"].append(row["con"])
+                cols["ci"].append(float(row["ci"]) if row["ci"] else np.nan)
         d = {k: np.array(v) for k, v in cols.items()}
         if csv_path == CACHE_DIR / "hygdata_v41.csv":
             np.savez(npz, **d)
-    cat = Catalog(d["hip"], d["ra"], d["dec"], d["mag"], d["name"], d["con"])
+    cat = Catalog(d["hip"], d["ra"], d["dec"], d["mag"], d["name"], d["con"], d["ci"])
     return cat.subset(cat.mag <= mag_limit)
+
+
+def bv_to_temp(bv):
+    """Effective temperature (K) from the B-V color index (Ballesteros 2012). Unknown -> Sun-like."""
+    bv = np.clip(np.nan_to_num(np.asarray(bv, dtype=float), nan=0.65), -0.4, 2.0)
+    return 4600.0 * (1.0 / (0.92 * bv + 1.7) + 1.0 / (0.92 * bv + 0.62))
+
+
+def temp_to_rgb(temp, saturation=1.0):
+    """Approximate color of a blackbody at temp (K) as sRGB in 0..1 (Tanner Helland's fit).
+    saturation > 1 exaggerates the hue, as astrophotos usually do."""
+    t = np.clip(np.asarray(temp, dtype=float), 1000, 40000) / 100.0
+    hot = t > 66
+    r = np.where(hot, 329.698727446 * np.maximum(t - 60, 1e-9) ** -0.1332047592, 255.0)
+    g = np.where(hot, 288.1221695283 * np.maximum(t - 60, 1e-9) ** -0.0755148492,
+                 99.4708025861 * np.log(t) - 161.1195681661)
+    b = np.where(t >= 66, 255.0,
+                 np.where(t <= 19, 0.0, 138.5177312231 * np.log(np.maximum(t - 10, 1e-9)) - 305.0447927307))
+    rgb = np.clip(np.stack([r, g, b], axis=-1) / 255.0, 0, 1)
+    grey = rgb.mean(axis=-1, keepdims=True)
+    return np.clip(grey + (rgb - grey) * saturation, 0, 1)
 
 
 # ---------------------------------------------------------------------------
@@ -973,18 +1003,98 @@ def print_report(info, rank):
 
 
 # ---------------------------------------------------------------------------
+# Real sky background (optional): any equirectangular all-sky image
+# ---------------------------------------------------------------------------
+
+# ICRS (J2000 equatorial) -> galactic rotation (Hipparcos definition).
+ICRS_TO_GAL = np.array([
+    [-0.0548755604162154, -0.8734370902348850, -0.4838350155487132],
+    [+0.4941094278755837, -0.4448296299600112, +0.7469822444972189],
+    [-0.8676661490190047, -0.1980763734312015, +0.4559837761750669],
+])
+
+
+@dataclass
+class SkyImage:
+    """An all-sky equirectangular image and how its pixels map onto the sky."""
+    rgb: np.ndarray       # (h, w, 3) floats in 0..1
+    diffuse: np.ndarray   # same image with the stars filtered out
+    frame: str            # "equatorial" or "galactic"
+    lon_sign: int         # +1: longitude grows to the right, -1: to the left
+    lon_offset: float     # longitude (deg) at the left edge, before the sign is applied
+
+    def sample(self, xyz, layer="diffuse"):
+        """Bilinear sample of the image at unit vectors xyz (..., 3) (ICRS)."""
+        from scipy.ndimage import map_coordinates
+
+        v = xyz @ ICRS_TO_GAL.T if self.frame == "galactic" else xyz
+        lon = np.arctan2(v[..., 1], v[..., 0]) / DEG
+        lat = np.arcsin(np.clip(v[..., 2], -1, 1)) / DEG
+        img = self.diffuse if layer == "diffuse" else self.rgb
+        h, w = img.shape[:2]
+        x = (((self.lon_sign * lon - self.lon_offset) / 360.0) % 1.0) * w - 0.5
+        y = (90.0 - lat) / 180.0 * h - 0.5
+        coords = [y.ravel(), x.ravel()]
+        out = [map_coordinates(img[..., c], coords, order=1, mode="grid-wrap") for c in range(3)]
+        return np.stack(out, axis=-1).reshape(xyz.shape[:-1] + (3,))
+
+
+def load_sky_image(path, cat, max_width=4096):
+    """Load an equirectangular all-sky map (jpg/png/tif) and work out its orientation by checking
+    which convention puts bright pixels where the catalog's bright stars are."""
+    from PIL import Image
+    from scipy.ndimage import median_filter
+
+    Image.MAX_IMAGE_PIXELS = None
+    im = Image.open(path)
+    if im.format == "JPEG":
+        im.draft("RGB", (max_width, max_width // 2))
+    im = im.convert("RGB")
+    if im.width > max_width:
+        im = im.resize((max_width, max_width * im.height // im.width), Image.LANCZOS)
+    rgb = np.asarray(im, dtype=np.float32) / 255.0
+    # Stars are a few pixels wide at this size; a median filter keeps only the diffuse glow.
+    diffuse = np.stack([median_filter(rgb[..., c], size=7, mode="wrap") for c in range(3)], axis=-1)
+
+    bright = cat.xyz[cat.mag < 4.0]
+    rng = np.random.default_rng(0)
+    rand = rng.normal(size=(4000, 3))
+    rand /= np.linalg.norm(rand, axis=1)[:, None]
+    best, best_ratio = None, 0.0
+    for frame in ("equatorial", "galactic"):
+        for sign in (1, -1):
+            for offset in (0.0, 180.0):
+                sky = SkyImage(rgb, diffuse, frame, sign, offset)
+                lum_star = sky.sample(bright, "rgb").mean()
+                lum_rand = sky.sample(rand, "rgb").mean()
+                ratio = lum_star / max(lum_rand, 1e-6)
+                if ratio > best_ratio:
+                    best, best_ratio = sky, ratio
+    if best_ratio < 1.5:
+        raise SystemExit(f"Couldn't match {path} to the sky (best contrast {best_ratio:.2f}). It needs to be "
+                         "an equirectangular all-sky map in equatorial or galactic coordinates.")
+    print(f"Sky image: {best.frame} coordinates, longitude {'right' if best.lon_sign > 0 else 'left'}ward "
+          f"from {best.lon_offset:.0f}° (bright-star contrast {best_ratio:.1f}x)")
+    return best
+
+
+# ---------------------------------------------------------------------------
 # Chart
 # ---------------------------------------------------------------------------
 
-def _draw_bonds(ax, mol, pos, color, lw, inner_lw, alpha=1.0, zorder=3):
+def _draw_bonds(ax, mol, pos, color, lw, inner_lw, alpha=1.0, zorder=3, gap=None):
     """Skeletal-formula bonds between the points `pos` (complex): double bonds in rings get an
-    inner parallel line toward the ring's center, other double/triple bonds parallel lines."""
+    inner parallel line toward the ring's center, other double/triple bonds parallel lines.
+    gap[i] leaves that much space (data units) between atom i and its bonds."""
     def line(p, q, width):
         ax.plot([p.real, q.real], [p.imag, q.imag], color=color, lw=width, alpha=alpha,
                 solid_capstyle="round", zorder=zorder)
 
     for i, j, order in mol.bonds:
         p, q = pos[i], pos[j]
+        if gap is not None:
+            u = (q - p) / abs(q - p)
+            p, q = p + gap[i] * u, q - gap[j] * u
         d = q - p
         normal = 1j * d / abs(d)
         if order == 1:
@@ -1005,73 +1115,238 @@ def _draw_bonds(ax, mol, pos, color, lw, inner_lw, alpha=1.0, zorder=3):
                 line(p + k * abs(d) * normal, q + k * abs(d) * normal, inner_lw)
 
 
-def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names=False):
+def _pick_font():
+    from matplotlib import font_manager
+
+    names = {f.name for f in font_manager.fontManager.ttflist}
+    return next((f for f in ("Inter", "Inter Display", "DejaVu Sans") if f in names), "sans-serif")
+
+
+def _spaced(text, gap=" "):
+    """Letter-spaced caps, poster style."""
+    caps = "".join(c.upper() if c.isascii() else c for c in text)  # keep β a β, not a Β
+    return gap.join(caps).replace(gap + " " + gap, "   ")
+
+
+def _render_sky(pos, mags, temps, boost, featured, size_px, lo, hi, mag_ref, haze_pos, haze_mag,
+                backdrop=None):
+    """Additive-light render of stars into a float RGB image.
+
+    pos/mags/temps: stars to draw (complex chart-plane positions, magnitudes, temperatures)
+    boost:          per-star brightness factor (the figure's stars are drawn brighter)
+    featured:       stars of the figure; they get a minimum size and a wider colored halo
+    haze_pos/mag:   all stars in view, smoothed into a faint Milky Way glow
+    backdrop:       optional (H, W, 3) diffuse light from a real sky image, used instead of the haze"""
+    from scipy.ndimage import gaussian_filter
+
+    W, H = size_px
+    img = np.zeros((H, W, 3))
+    sx = W / (hi[0] - lo[0])
+    px = (pos.real - lo[0]) * sx
+    py = (hi[1] - pos.imag) * sx
+    u = W / 2400.0  # resolution-independent pixel unit
+
+    # Milky Way haze: flux-weighted star density blurred to a gentle gradient. Only the excess over
+    # the frame's sparsest parts glows, so it traces where the sky is genuinely richer.
+    hx = ((haze_pos.real - lo[0]) * sx).astype(int)
+    hy = ((hi[1] - haze_pos.imag) * sx).astype(int)
+    ok = (hx >= 0) & (hx < W) & (hy >= 0) & (hy < H)
+    dens = np.zeros((H, W))
+    np.add.at(dens, (hy[ok], hx[ok]), (10 ** (-0.4 * (haze_mag[ok] - mag_ref))) ** 0.5)
+    haze = gaussian_filter(dens, 170 * u)
+    p10, p99 = np.percentile(haze, [10, 99.5])
+    if backdrop is not None:
+        # Real sky: keep its colors, lift it so the Milky Way's structure shows, floor at black.
+        lum = backdrop.mean(axis=-1)
+        b10, b99 = np.percentile(lum, [5, 99.7])
+        img += 0.55 * np.clip((backdrop - b10) / max(b99 - b10, 1e-6), 0, None) ** 1.2
+    elif p99 > p10:
+        haze = np.clip((haze - p10) / (p99 - p10), 0, 1) ** 1.4
+        img += 0.22 * haze[..., None] * np.array([0.38, 0.42, 0.95])
+
+    colors = temp_to_rgb(temps, saturation=1.7)
+    order = np.argsort(-mags)  # faint first; addition is order-independent but keeps it tidy
+    for i in order:
+        flux = 10 ** (-0.4 * (mags[i] - mag_ref)) * boost[i]
+        level = np.log10(1 + flux)  # perceptual brightness, ~0 for the faintest stars
+        if featured[i]:
+            level = max(level, 1.3)
+        col = colors[i]
+        core_s = u * (0.9 + 1.1 * level)
+        halo_s = core_s * (6.5 if featured[i] else 4.5)
+        spike = u * 38 * level ** 1.6 if level > 0.6 else 0.0
+        R = int(max(4 * halo_s, spike * 1.2, 3))
+        x0, y0 = int(px[i]), int(py[i])
+        xa, xb = max(x0 - R, 0), min(x0 + R + 1, W)
+        ya, yb = max(y0 - R, 0), min(y0 + R + 1, H)
+        if xa >= xb or ya >= yb:
+            continue
+        dx = np.arange(xa, xb) - px[i]
+        dy = np.arange(ya, yb) - py[i]
+        gx_c, gy_c = np.exp(-dx ** 2 / (2 * core_s ** 2)), np.exp(-dy ** 2 / (2 * core_s ** 2))
+        gx_h, gy_h = np.exp(-dx ** 2 / (2 * halo_s ** 2)), np.exp(-dy ** 2 / (2 * halo_s ** 2))
+        # Faint stars get dimmer, not just smaller, so the deep field reads as fine dust.
+        dimming = 1.0 if featured[i] else min(1.0, 1.5 * np.sqrt(flux))
+        core = np.outer(gy_c, gx_c) * (1.6 + 1.2 * level) * dimming
+        halo = np.outer(gy_h, gx_h) * (0.10 + 0.22 * level) * (1.6 if featured[i] else dimming)
+        patch = core[..., None] * (0.55 + 0.45 * col) + halo[..., None] * col
+        if spike > 0:
+            # Diffraction spikes: a thin cross, fading exponentially along each arm.
+            w = u * 0.7
+            arm_x = np.outer(np.exp(-dy ** 2 / (2 * w ** 2)), np.exp(-np.abs(dx) / (spike * 0.35)))
+            arm_y = np.outer(np.exp(-np.abs(dy) / (spike * 0.35)), np.exp(-dx ** 2 / (2 * w ** 2)))
+            patch += ((arm_x + arm_y) * (0.35 + 0.25 * level))[..., None] * (0.5 + 0.5 * col)
+        img[ya:yb, xa:xb] += patch
+
+    # Soft vignette, then a filmic curve so bright cores burn to white but halos keep their color.
+    yy, xx = np.mgrid[0:H, 0:W]
+    r = np.hypot((xx - W / 2) / (W / 2), (yy - H / 2) / (H / 2))
+    img *= (1 - 0.35 * np.clip(r - 0.4, 0, None) ** 1.5)[..., None]
+    base = np.array([0.020, 0.024, 0.043])  # night-sky blue-black, same as the frame
+    return np.clip(base + 1 - np.exp(-1.35 * img), 0, 1)
+
+
+def _sky_scene(mol, cat, m, rot, lo, hi, W, H, sky_image=None, sky_gain=0.55):
+    """Render the sky for the chart-plane box lo..hi at W x H pixels. Returns the image, the atom
+    positions and, per atom, the gap (data units) bonds should leave around its star."""
+    verts = vertices(mol, cat, m)[0] * rot
+    r = np.hypot(*(hi - lo)) / 2 + np.abs(((lo + hi) / 2) @ [1, 1j]) + 1.0
+    near = np.flatnonzero(cat.xyz @ m.center >= np.cos(min(r, 85) * DEG))
+    w = project(cat.xyz[near], m.center) * rot
+    inbox = (w.real >= lo[0]) & (w.real <= hi[0]) & (w.imag >= lo[1]) & (w.imag <= hi[1])
+    near, w = near[inbox], w[inbox]
+
+    used = m.stars[m.used]
+    featured = np.isin(near, used)
+    boost = np.where(featured, 5.0, 0.35)  # the figure's stars stand out
+    mag_ref = float(np.max(cat.mag[used]))
+
+    backdrop = None
+    if sky_image is not None:
+        # Sample the real sky at quarter resolution (it's diffuse light) and scale up.
+        from scipy.ndimage import zoom
+
+        qw, qh = W // 4, H // 4
+        gx = lo[0] + (np.arange(qw) + 0.5) / qw * (hi[0] - lo[0])
+        gy = hi[1] - (np.arange(qh) + 0.5) / qh * (hi[1] - lo[1])
+        plane = (gx[None, :] + 1j * gy[:, None]) / rot  # undo the upright rotation
+        small = sky_image.sample(unproject(plane, m.center))
+        backdrop = sky_gain / 0.55 * zoom(small, (H / qh, W / qw, 1), order=1)[:H, :W]
+    sky = _render_sky(w, cat.mag[near], cat.temp[near], boost, featured, (W, H), lo, hi, mag_ref,
+                      w, cat.mag[near], backdrop)
+
+    # Bonds stop just short of each star so the line doesn't cut through its core (corners of
+    # starless atoms still join up). The gap follows the star's rendered core size.
+    star_mag = np.full(mol.n, mag_ref)
+    star_mag[m.used] = cat.mag[m.stars[m.used]]
+    level = np.maximum(np.log10(1 + 10 ** (-0.4 * (star_mag - mag_ref)) * 5.0), 1.3)
+    gap_px = (W / 2400.0) * (5.0 + 4.0 * level)
+    gap = np.where(m.used, gap_px * (hi[0] - lo[0]) / W, 0.0)
+    return sky, verts, gap, near, w
+
+
+def plot_chart(mol, cat, m, info, path, north_up=False, labels=False, star_names=False, sky_image=None,
+               sky_gain=0.55):
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    bg_col, line_col, glow_col = "#0b0e14", "#e2f1ff", "#80d8ff"
+    font = _pick_font()
+    ink, dim = "#e8eefc", "#8d97b5"
     rot = 1.0 if north_up else np.conj(m.a) / abs(m.a)  # turn the molecule upright on the page
 
-    stars = vertices(mol, cat, m)[0] * rot
     s = m.bond_deg
-    lo = np.array([stars.real.min(), stars.imag.min()]) - 1.6 * s
-    hi = np.array([stars.real.max(), stars.imag.max()]) + 1.6 * s
+    v0 = vertices(mol, cat, m)[0] * rot
+    lo = np.array([v0.real.min(), v0.imag.min()]) - 1.6 * s
+    hi = np.array([v0.real.max(), v0.imag.max()]) + 1.6 * s
+    W = 3600
+    H = int(W * (hi[1] - lo[1]) / (hi[0] - lo[0]))
+    sky, verts, gap, near, w = _sky_scene(mol, cat, m, rot, lo, hi, W, H, sky_image, sky_gain)
 
-    r = np.abs(hi - lo).max()
-    near = np.flatnonzero(cat.xyz @ m.center >= np.cos(min(r, 80) * DEG))
-    bg = project(cat.xyz[near], m.center) * rot
-    inbox = (bg.real >= lo[0]) & (bg.real <= hi[0]) & (bg.imag >= lo[1]) & (bg.imag <= hi[1])
-    near, bg = near[inbox], bg[inbox]
+    fig_w = 12.0
+    fig = plt.figure(figsize=(fig_w, fig_w * H / W + 1.6), facecolor="#05060b")  # = base color of the sky render
+    top = 0.8 / (fig_w * H / W + 1.6)
+    ax = fig.add_axes([0, 0.8 / (fig_w * H / W + 1.6), 1, 1 - 2 * top])
+    ax.imshow(sky, extent=(lo[0], hi[0], lo[1], hi[1]), origin="upper", interpolation="bilinear")
+    _draw_bonds(ax, mol, verts, "#d6e2ff", lw=1.0, inner_lw=0.8, alpha=0.7, gap=gap)
 
-    def size(mag):
-        return 30.0 * 10 ** (-0.32 * (mag - 5.0))
-
-    fig, ax = plt.subplots(figsize=(10, 10 * (hi[1] - lo[1]) / (hi[0] - lo[0])), facecolor=bg_col)
-    ax.set_facecolor(bg_col)
-    ax.scatter(bg.real, bg.imag, s=size(cat.mag[near]), c="#cfd8dc", alpha=0.35, edgecolors="none", zorder=1)
-
+    if labels:
+        for i in range(mol.n):
+            if mol.symbols[i] != "C":
+                ax.annotate(mol.symbols[i], (verts[i].real, verts[i].imag), xytext=(9, 9),
+                            textcoords="offset points", color=dim, fontsize=9, fontfamily=font)
     if star_names:
-        for idx, w in zip(near, bg):
-            if cat.name[idx] and idx not in m.stars[m.used]:
-                ax.annotate(cat.name[idx], (w.real, w.imag), xytext=(5, -9), textcoords="offset points",
-                            color="#8a96a3", fontsize=7, fontfamily="monospace", zorder=2)
-
-    _draw_bonds(ax, mol, stars, line_col, lw=1.6, inner_lw=1.2, alpha=0.9)
-
-    for i, w in enumerate(stars):
-        if not m.used[i]:
-            continue  # starless atom: the bonds just meet in a plain corner
-        special = mol.symbols[i] != "C" or mol.degree(i) == 1
-        core = max(size(cat.mag[m.stars[i]]) * 1.4, 30.0)
-        ax.scatter([w.real], [w.imag], s=core * 2.8, c=glow_col, alpha=0.22, edgecolors="none", zorder=4)
-        if special:
-            ax.scatter([w.real], [w.imag], s=core * 2.6, marker="*", c="#ffffff", edgecolors="none", zorder=5)
-        else:
-            ax.scatter([w.real], [w.imag], s=core, c="#ffffff", edgecolors="none", zorder=5)
-        if labels and mol.symbols[i] != "C":
-            ax.annotate(mol.symbols[i], (w.real, w.imag), xytext=(7, 7), textcoords="offset points",
-                        color=glow_col, fontsize=9, fontfamily="monospace", zorder=6)
+        for idx, p in zip(near, w):
+            if cat.name[idx]:
+                ax.annotate(cat.name[idx], (p.real, p.imag), xytext=(8, -12), textcoords="offset points",
+                            color=dim, fontsize=7.5, fontfamily=font)
 
     # Compass: where north and east really point on this chart.
-    base = complex(hi[0] - 0.55 * s, lo[1] + 0.55 * s)
+    base = complex(hi[0] - 0.7 * s, lo[1] + 0.9 * s)
     for label, direction in (("N", 1j), ("E", -1.0)):
-        tip = base + 0.45 * s * direction * rot
+        tip = base + 0.42 * s * direction * rot
         ax.annotate("", xy=(tip.real, tip.imag), xytext=(base.real, base.imag),
-                    arrowprops=dict(arrowstyle="-|>", color="#8a96a3", lw=0.9), zorder=2)
-        txt = base + 0.62 * s * direction * rot
-        ax.text(txt.real, txt.imag, label, color="#8a96a3", fontsize=8, ha="center", va="center",
-                fontfamily="monospace")
+                    arrowprops=dict(arrowstyle="-|>", color=dim, lw=0.8, mutation_scale=8))
+        txt = base + 0.6 * s * direction * rot
+        ax.text(txt.real, txt.imag, label, color=dim, fontsize=7.5, ha="center", va="center", fontfamily=font)
 
     ax.set_xlim(lo[0], hi[0])
     ax.set_ylim(lo[1], hi[1])
-    ax.set_aspect("equal")
     ax.axis("off")
-    ax.set_title(mol.name, color=line_col, fontsize=15, fontfamily="monospace", pad=14)
-    ax.text(0.5, -0.02, f"RA {info['ra']}   Dec {info['dec']}   ·   J2000   ·   {info['constellation']}",
-            transform=ax.transAxes, color=line_col, fontsize=11, ha="center", va="top", fontfamily="monospace")
-    fig.savefig(path, dpi=300, facecolor=bg_col, bbox_inches="tight", pad_inches=0.3)
+
+    fig.text(0.5, 1 - 0.42 * top, _spaced(mol.name), color=ink, fontsize=17, ha="center", va="center",
+             fontfamily=font, fontweight="light")
+    fig.text(0.5, 0.62 * top, f"{info['ra']}     {info['dec']}", color=ink, fontsize=10.5,
+             ha="center", va="center", fontfamily=font)
+    fig.text(0.5, 0.28 * top, _spaced(f"{info['constellation']}  ·  J2000", " "), color=dim,
+             fontsize=7.5, ha="center", va="center", fontfamily=font)
+
+    fig.savefig(path, dpi=300, facecolor=fig.get_facecolor())
+    plt.close(fig)
+
+
+def plot_wallpaper(mol, cat, m, info, path, size=(3840, 2160), north_up=False, sky_image=None,
+                   sky_gain=0.55):
+    """Full-bleed 16:9 wallpaper: sky to the edges, the molecule a little right of center at about
+    half the width, a faint glow on the bonds and one quiet line of text in the corner."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    font = _pick_font()
+    W, H = size
+    rot = 1.0 if north_up else np.conj(m.a) / abs(m.a)
+    v0 = vertices(mol, cat, m)[0] * rot
+    fig_lo = np.array([v0.real.min(), v0.imag.min()])
+    fig_hi = np.array([v0.real.max(), v0.imag.max()])
+    # Degrees per pixel so the figure spans ~52% of the width and at most ~62% of the height.
+    dpp = max((fig_hi[0] - fig_lo[0]) / (0.52 * W), (fig_hi[1] - fig_lo[1]) / (0.62 * H))
+    cx, cy = (fig_lo + fig_hi) / 2
+    lo = np.array([cx - 0.57 * W * dpp, cy - 0.5 * H * dpp])
+    hi = lo + np.array([W, H]) * dpp
+    sky, verts, gap, _, _ = _sky_scene(mol, cat, m, rot, lo, hi, W, H, sky_image, sky_gain)
+    # Quiet the bottom-left corner a little so the caption sits on calm sky.
+    yy, xx = np.mgrid[0:H, 0:W]
+    shade = np.exp(-(((xx - 0.0 * W) / (0.32 * W)) ** 2 + ((yy - H) / (0.30 * H)) ** 2))
+    sky = sky * (1 - 0.55 * shade)[..., None]
+
+    fig = plt.figure(figsize=(W / 300, H / 300), dpi=300)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.imshow(sky, extent=(lo[0], hi[0], lo[1], hi[1]), origin="upper", interpolation="bilinear")
+    # Glow first (wide, faint), then the line itself.
+    _draw_bonds(ax, mol, verts, "#9fb8ff", lw=4.0, inner_lw=3.0, alpha=0.08, gap=gap)
+    _draw_bonds(ax, mol, verts, "#e2eaff", lw=0.9, inner_lw=0.7, alpha=0.75, gap=gap)
+    ax.set_xlim(lo[0], hi[0])
+    ax.set_ylim(lo[1], hi[1])
+    ax.axis("off")
+
+    fig.text(0.04, 0.095, _spaced(mol.name), color="#e8eefc", fontsize=12, ha="left", va="bottom",
+             fontfamily=font, fontweight="light")
+    fig.text(0.04, 0.062, f"{info['ra']}   {info['dec']}   ·   {info['constellation']}",
+             color="#a3adc9", fontsize=7, ha="left", va="bottom", fontfamily=font)
+    fig.savefig(path, dpi=300)
     plt.close(fig)
 
 
@@ -1175,13 +1450,18 @@ def main(argv=None):
     p.add_argument("--tattoo-stars", type=int, default=8, metavar="N",
                    help="how many of the brightest nearby stars to add to the tattoo art (default 8)")
     p.add_argument("--no-tattoo-text", action="store_true", help="leave the coordinates off the tattoo art")
+    p.add_argument("--wallpaper", action="store_true", help="also write a 3840x2160 wallpaper per charted candidate")
+    p.add_argument("--sky-gain", type=float, default=0.55, help="brightness of the --sky-image backdrop (default 0.55)")
     p.add_argument("--workers", type=int, help="threads to use (default: all cores)")
+    p.add_argument("--sky-image", metavar="PATH",
+                   help="equirectangular all-sky image (e.g. NASA SVS Deep Star Maps) for a real Milky Way "
+                        "behind the charts; its orientation is detected automatically")
     p.add_argument("--catalog", help="path to a local hygdata_v41.csv instead of downloading it")
     args = p.parse_args(argv)
 
     mol = load_molecule(args.molecule, args.title)
     print(f"{mol.name}: {mol.n} heavy atoms, {len(mol.bonds)} bonds")
-    full = load_catalog(args.mag + 1.0, args.catalog)  # fainter stars only as chart background
+    full = load_catalog(args.mag + 2.5, args.catalog)  # fainter stars only as chart background
     sel = np.flatnonzero(full.mag <= args.mag)
     cat = full.subset(sel)
     print(f"{len(cat.hip)} stars brighter than mag {args.mag}")
@@ -1194,6 +1474,7 @@ def main(argv=None):
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     slug = re.sub(r"[^a-z0-9]+", "-", mol.name.lower()).strip("-")[:40] or "molecule"
+    sky_image = load_sky_image(args.sky_image, full) if args.sky_image else None
     report = []
     for m in matches:
         # Index into the full catalog, which also holds the fainter background stars.
@@ -1205,7 +1486,13 @@ def main(argv=None):
         if rank <= args.charts:
             print_report(info, rank)
             png = out / f"{slug}_{rank}.png"
-            plot_chart(mol, full, m, info, png, args.north_up, args.labels, args.star_names)
+            plot_chart(mol, full, m, info, png, args.north_up, args.labels, args.star_names, sky_image,
+                       args.sky_gain)
+            if args.wallpaper:
+                wp = out / f"{slug}_{rank}_wallpaper.png"
+                plot_wallpaper(mol, full, m, info, wp, north_up=args.north_up, sky_image=sky_image,
+                               sky_gain=args.sky_gain)
+                info["wallpaper"] = str(wp)
             info["chart"] = str(png)
             if args.tattoo:
                 base = out / f"{slug}_{rank}_tattoo"

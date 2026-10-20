@@ -51,6 +51,9 @@ magnitude) and how far it sits from its ideal atom position.
 | `--labels` | | label heteroatoms (O, N, ...) with their element |
 | `--star-names` | | label named background stars |
 | `--workers` | all cores | threads to use |
+| `--wallpaper` | | also write a 3840×2160 wallpaper for every charted candidate |
+| `--sky-image PATH` | | real all-sky image for the Milky Way behind charts and wallpapers (see below) |
+| `--sky-gain` | 0.55 | brightness of that sky image |
 | `--tattoo` | | also write stencil-ready line art (SVG + PNG) for every charted candidate |
 | `--tattoo-stars N` | 8 | how many of the brightest nearby stars to add to the tattoo art |
 | `--no-tattoo-text` | | leave the coordinates off the tattoo art |
@@ -81,6 +84,32 @@ fingerprint of the results, so speedups can be checked for identical output.
 
 The score is the RMSD between the stars and the ideal atom positions, in units of the bond length.
 0.1 means stars are off by a tenth of a bond on average.
+
+### Rendering
+
+Stars are drawn with additive light, the way a camera sees them: each one gets a core, a halo and,
+if bright, a diffraction-spike cross, colored by its surface temperature (from the catalog's B−V
+color index, converted to Kelvin and then to a blackbody color, with the hue exaggerated a bit like
+astrophotos do). The figure's own stars are boosted so the molecule reads first. Fainter stars down
+to `--mag` + 2.5 fill in the background, and a soft haze follows where the sky is genuinely richer in
+stars. Bonds stop just short of each star so they don't cut through its light.
+
+### Wallpaper
+
+`--wallpaper` writes a full-bleed 16:9 image at 3840×2160: sky to the edges, the molecule a little
+right of center, a faint glow on the bonds and one line of text in the corner.
+
+![wallpaper](examples/17-estradiol_1_wallpaper.png)
+
+### Real sky background
+
+`--sky-image` puts real Milky Way light behind everything instead of the synthetic haze. Use any
+equirectangular all-sky image, for example NASA's [Deep Star Maps 2020](https://svs.gsfc.nasa.gov/4851)
+(public domain, credit NASA/Goddard Space Flight Center Scientific Visualization Studio). Its
+orientation (equatorial or galactic coordinates, which way longitude runs, where it starts) is
+detected automatically by checking which convention puts bright pixels on the catalog's bright
+stars. The stars in the image are filtered out, so only its diffuse light is used and the rendered
+stars stay sharp. JPEG, PNG and 8-bit TIFF work; large images are scaled down to 4096 px wide.
 
 ### Tattoo export
 

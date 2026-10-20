@@ -115,3 +115,33 @@ def test_refine_forced_skip():
     assert stars[3] == -1
     assert all(stars[i] == i for i in range(8) if i != 3)
     assert score == pytest.approx(0.0, abs=1e-9)
+
+
+def test_temperatures():
+    assert A.bv_to_temp(0.65) == pytest.approx(5778, rel=0.02)  # the Sun
+    assert A.bv_to_temp(-0.3) > A.bv_to_temp(0.0) > A.bv_to_temp(1.5)
+    hot, cool = A.temp_to_rgb([20000, 3500])
+    assert hot[2] > hot[0] and cool[0] > cool[2]  # blue-white vs orange
+
+
+@pytest.mark.parametrize("frame,sign,offset", [("equatorial", 1, 0.0), ("galactic", -1, 180.0)])
+def test_sky_image_orientation_is_detected(tmp_path, frame, sign, offset):
+    """Paint the catalog's bright stars into an all-sky map using one convention and check the
+    loader recovers it."""
+    from PIL import Image
+
+    cat = A.load_catalog(5.0)
+    w, h = 1024, 512
+    v = cat.xyz @ A.ICRS_TO_GAL.T if frame == "galactic" else cat.xyz
+    lon = np.degrees(np.arctan2(v[:, 1], v[:, 0]))
+    lat = np.degrees(np.arcsin(v[:, 2]))
+    x = (((sign * lon - offset) / 360) % 1 * w).astype(int)
+    y = np.clip(((90 - lat) / 180 * h).astype(int), 0, h - 1)
+    img = np.zeros((h, w), np.uint8)
+    for dx in (-1, 0, 1):
+        for dy in (-1, 0, 1):
+            img[np.clip(y + dy, 0, h - 1), (x + dx) % w] = 255
+    path = tmp_path / "sky.png"
+    Image.fromarray(img).save(path)
+    sky = A.load_sky_image(str(path), cat)
+    assert (sky.frame, sky.lon_sign, sky.lon_offset) == (frame, sign, offset)
